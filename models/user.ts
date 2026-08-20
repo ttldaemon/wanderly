@@ -4,7 +4,6 @@ export interface IUser extends Document {
   name: string,
   email: string,
   password: string,
-  monthlyBudget: number,
   createdAt: Date
   
 }
@@ -23,10 +22,6 @@ const userSchema: Schema<IUser> = new Schema({
     type: String,
     required: true
   },
-  monthlyBudget: {
-    type: Number,
-    required: true
-  }
 }, {timestamps: true})
 
 

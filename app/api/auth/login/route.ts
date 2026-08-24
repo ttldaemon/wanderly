@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 
 const loginSchema = z.object({
-  email: z.email(),
+  userName: z.string(),
   password: z.string().min(6, "Password is not valid")
 })
 
@@ -20,11 +20,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({success: false, msg: parsedBody.error}, { status: 400 })
     }
 
-    const { email, password } = parsedBody.data
+    const { userName, password } = parsedBody.data
 
     await connectDB()
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ userName })
 
     if (!user) {
       return NextResponse.json({success: false, msg: "User not found"}, { status: 404 })

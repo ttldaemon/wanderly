@@ -6,11 +6,12 @@ import { connectDB } from "@/lib/db";
 
 const registerSchema = z.object({
   name: z.string(),
+  userName: z.string(),
   email: z.email(),
+  imgUrl: z.string().optional(),
   password: z
     .string()
-    .min(6, { message: "Password must be of minimum 6 characters" }),
-  monthlyBudget: z.coerce.number(),
+    .min(6, { message: "Password must be of minimum 6 characters" })
 });
 
 export async function POST(req: NextRequest) {
@@ -29,17 +30,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, email, password, monthlyBudget } = parsedBody.data;
+    const { name, userName, email, imgUrl, password } = parsedBody.data;
 
     await connectDB();
 
-    const userExist = await User.findOne({ email });
+    const userExist = await User.findOne({ userName });
 
     if (userExist) {
       return NextResponse.json(
         {
           success: false,
-          msg: "User with this email already exists",
+          msg: "User with this username already exists",
         },
         { status: 400 },
       );
@@ -49,9 +50,10 @@ export async function POST(req: NextRequest) {
 
     const user: IUser = await User.create({
       name,
+      userName,
       email,
-      password: hashedPass,
-      monthlyBudget,
+      imgUrl,
+      password: hashedPass
     });
 
     if (!user) {

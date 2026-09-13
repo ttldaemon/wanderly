@@ -1,5 +1,5 @@
 import { connectDB } from "@/lib/db";
-import { Wandy } from "@/models/wandy";
+import { Tour } from "@/models/tour";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/mini";
 
@@ -7,7 +7,7 @@ interface Params {
   userId: string;
 }
 
-const postWanderSchema = z.object({
+const postTourSchema = z.object({
   imgUrls: z.array(z.string()),
   caption: z.string(),
   location: z.string(),
@@ -23,7 +23,7 @@ export async function POST(
   const { userId } = await params;
 
   // posting a new wander
-  const parsedBody = postWanderSchema.safeParse(body);
+  const parsedBody = postTourSchema.safeParse(body);
 
   if (!parsedBody.success) {
     return NextResponse.json(
@@ -40,7 +40,7 @@ export async function POST(
   try {
     await connectDB();
 
-    const newWandy = Wandy.create({
+    const newTour = Tour.create({
       userId,
       imgUrls,
       caption,
@@ -49,11 +49,11 @@ export async function POST(
       visibility,
     });
 
-    if (!newWandy) {
+    if (!newTour) {
       return NextResponse.json(
         {
           success: false,
-          msg: "Wandy creation failed",
+          msg: "Tour creation failed",
         },
         { status: 500 },
       );
@@ -62,8 +62,8 @@ export async function POST(
     return NextResponse.json(
       {
         success: true,
-        msg: "Wandy created successfully",
-        data: newWandy,
+        msg: "Tour created successfully",
+        data: newTour,
       },
       { status: 201 },
     );

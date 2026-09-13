@@ -1,7 +1,7 @@
-import { Document, model, models, Schema } from "mongoose";
+import { model, models, Schema } from "mongoose";
 
-export interface IWandy extends Document {
-  userId: Schema.Types.ObjectId,
+export interface ITour {
+  userId: Schema.Types.ObjectId;
   imgUrls: string[];
   caption: string;
   location: string;
@@ -11,7 +11,7 @@ export interface IWandy extends Document {
   updatedAt: Date;
 }
 
-const wandySchema = new Schema<IWandy>(
+const tourSchema = new Schema<ITour>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     imgUrls: { type: [String], required: true },
@@ -23,5 +23,4 @@ const wandySchema = new Schema<IWandy>(
   { timestamps: true },
 );
 
-
-export const Wandy = models.Wandy || model("Wandy", wandySchema)
+export const Tour = models.Tour || model("Tour", tourSchema);

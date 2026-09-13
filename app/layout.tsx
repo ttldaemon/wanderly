@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Exपेन्सify",
-  description: "An expense tracker app - created by web5 KRS",
+  title: "Wanderly",
+  description: "A Tour experience posting app - created by web5 KRS",
 };
 
 export default function RootLayout({

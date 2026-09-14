@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
 import { Tour } from "@/models/tour";
+import { verifyToken } from "@/utils/helpers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/mini";
 
@@ -21,6 +22,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<Params> },
 ) {
+  await verifyToken()
   const body = await req.json();
   const { userId } = await params;
 
@@ -75,6 +77,7 @@ export async function POST(
       {
         success: false,
         msg: "Internal server error",
+        error: error.message,
       },
       { status: 500 },
     );
@@ -88,6 +91,7 @@ export async function GET(
   { params }: { params: Promise<Params> },
 ) {
   try {
+    await verifyToken();
     await connectDB();
     const { userId } = await params;
 
@@ -111,6 +115,7 @@ export async function GET(
       {
         success: false,
         msg: "Something went wrong",
+        error: error.message,
       },
       { status: 500 },
     );

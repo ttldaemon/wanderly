@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db";
 import { Tour } from "@/models/tour";
 import { User } from "@/models/user";
+import { verifyToken } from "@/utils/helpers";
 import { NextRequest, NextResponse } from "next/server";
 
 type user = {
@@ -23,6 +24,7 @@ type tour = {
 // requires query params in format: /api/search?userName=someUserName or /api/search?location=someLocation
 export async function GET(req: NextRequest) {
     try {
+        await verifyToken();
         await connectDB()
         const searchParams = req.nextUrl.searchParams;
 

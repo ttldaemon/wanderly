@@ -15,6 +15,8 @@ const postTourSchema = z.object({
   visibility: z.enum(["public", "private"]),
 });
 
+
+// create a new tour for a user
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<Params> },
@@ -40,7 +42,7 @@ export async function POST(
   try {
     await connectDB();
 
-    const newTour = Tour.create({
+    const newTour = await Tour.create({
       userId,
       imgUrls,
       caption,
@@ -73,6 +75,42 @@ export async function POST(
       {
         success: false,
         msg: "Internal server error",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+
+// get all the posts of a user, based on the userId passed in the params
+export async function GET(
+  _: NextRequest,
+  { params }: { params: Promise<Params> },
+) {
+  try {
+    await connectDB();
+    const { userId } = await params;
+
+    console.log(userId);
+
+    const tours = await Tour.find({ userId });
+
+    console.log(tours);
+
+    return NextResponse.json(
+      {
+        success: true,
+        msg: "Tours of the user",
+        tours,
+      },
+      { status: 200 },
+    );
+  } catch (error: unknown) {
+    console.log(error);
+    return NextResponse.json(
+      {
+        success: false,
+        msg: "Something went wrong",
       },
       { status: 500 },
     );

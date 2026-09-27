@@ -16,32 +16,45 @@ const postTourSchema = z.object({
   visibility: z.enum(["public", "private"]),
 });
 
-
-// create a new tour for a user
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<Params> },
 ) {
-  await verifyToken()
-  const body = await req.json();
-  const { userId } = await params;
-
-  // posting a new wander
-  const parsedBody = postTourSchema.safeParse(body);
-
-  if (!parsedBody.success) {
-    return NextResponse.json(
-      {
-        success: false,
-        msg: parsedBody.error,
-      },
-      { status: 400 },
-    );
-  }
-
-  const { imgUrls, caption, location, tags, visibility } = parsedBody.data;
-
   try {
+    let decoded;
+    try {
+      decoded = await verifyToken();
+    } catch {
+      return NextResponse.json(
+        { success: false, msg: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
+    const { userId } = await params;
+
+    if (decoded._id !== userId) {
+      return NextResponse.json(
+        { success: false, msg: "Forbidden" },
+        { status: 403 },
+      );
+    }
+
+    const body = await req.json();
+    const parsedBody = postTourSchema.safeParse(body);
+
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          msg: parsedBody.error,
+        },
+        { status: 400 },
+      );
+    }
+
+    const { imgUrls, caption, location, tags, visibility } = parsedBody.data;
+
     await connectDB();
 
     const newTour = await Tour.create({
@@ -72,34 +85,36 @@ export async function POST(
       { status: 201 },
     );
   } catch (error: unknown) {
-    console.error(error);
+    const message =
+      error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
       {
         success: false,
         msg: "Internal server error",
-        error: error.message,
+        error: message,
       },
       { status: 500 },
     );
   }
 }
 
-
-// get all the posts of a user, based on the userId passed in the params
 export async function GET(
   _: NextRequest,
   { params }: { params: Promise<Params> },
 ) {
   try {
-    await verifyToken();
+    try {
+      await verifyToken();
+    } catch {
+      return NextResponse.json(
+        { success: false, msg: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     await connectDB();
     const { userId } = await params;
-
-    console.log(userId);
-
     const tours = await Tour.find({ userId });
-
-    console.log(tours);
 
     return NextResponse.json(
       {
@@ -110,12 +125,13 @@ export async function GET(
       { status: 200 },
     );
   } catch (error: unknown) {
-    console.log(error);
+    const message =
+      error instanceof Error ? error.message : "Something went wrong";
     return NextResponse.json(
       {
         success: false,
         msg: "Something went wrong",
-        error: error.message,
+        error: message,
       },
       { status: 500 },
     );

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 
 export async function GET() {
-  connectDB();
+  await connectDB();
 
   return NextResponse.json({
     success: true,

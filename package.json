@@ -12,6 +12,7 @@
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.11.0",
     "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.48.0",
     "mongoose": "^9.7.3",
     "next": "16.2.9",
     "react": "19.2.4",

@@ -22,9 +22,13 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<Params> },
 ) {
-  await verifyToken()
+  const session = await verifyToken()
   const body = await req.json();
   const { userId } = await params;
+
+  if (session._id !== userId) {
+    return NextResponse.json({ success: false, msg: "Forbidden" }, { status: 403 });
+  }
 
   // posting a new wander
   const parsedBody = postTourSchema.safeParse(body);

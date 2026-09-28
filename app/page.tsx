@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, MapPin, Plus } from "lucide-react";
 import LeftPanel from "@/components/LeftPanel";
 import RightPanel from "@/components/RightPanel";
@@ -169,6 +170,7 @@ export default function HomePage() {
     tours: TourPost[];
   } | null>(null);
 
+  const router = useRouter();
   const [loadingInitials, setLoadingInitials] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(false);
 
@@ -176,6 +178,10 @@ export default function HomePage() {
     setLoadingInitials(true);
     try {
       const res = await fetch("/api/initials");
+      if (res.status === 401) {
+        router.push("/register");
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         if (data.currentUser) {
@@ -185,22 +191,24 @@ export default function HomePage() {
             userName: data.currentUser.userName,
             imgUrl: data.currentUser.imgUrl,
           });
+        } else {
+          router.push("/register");
+          return;
         }
         setRecommendedUsers(
           data.users?.length ? data.users : FALLBACK_USERS,
         );
         setHomeTours(data.tours?.length ? data.tours : FALLBACK_TOURS);
       } else {
-        setRecommendedUsers(FALLBACK_USERS);
-        setHomeTours(FALLBACK_TOURS);
+        router.push("/register");
+        return;
       }
     } catch {
-      setRecommendedUsers(FALLBACK_USERS);
-      setHomeTours(FALLBACK_TOURS);
+      router.push("/register");
     } finally {
       setLoadingInitials(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     fetchInitialData();

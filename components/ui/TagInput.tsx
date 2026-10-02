@@ -45,7 +45,7 @@ export function TagInput({ label, tags, onChange, maxTags = 8 }: TagInputProps) 
         {tags.map((tag) => (
           <span
             key={tag}
-            className="flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-1 text-[10px] mobile-m:text-xs font-medium text-forest"
+            className="flex items-center gap-1 rounded-xl bg-forest/10 px-2.5 py-1 text-[13px] mobile-m:text-xs font-medium text-forest"
           >
             #{tag}
             <IconButton

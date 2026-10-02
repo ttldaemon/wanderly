@@ -14,8 +14,8 @@ const CREATE_POST_ENDPOINT = (userId: string) => `/api/tours/${userId}`;
 const MAX_IMAGES = 6;
 const MAX_TAGS = 8;
 
-type Audience = "Everyone" | "Only me";
-const AUDIENCE_OPTIONS: Audience[] = ["Everyone", "Only me"];
+type Audience = "Everyone" | "Friends only";
+const AUDIENCE_OPTIONS: Audience[] = ["Everyone", "Friends only"];
 
 function toVisibility(audience: Audience): "public" | "private" {
   return audience === "Everyone" ? "public" : "private";
@@ -56,10 +56,7 @@ export interface CreatePostModalProps {
   userId: string;
 }
 
-/* ------------------------------------------------------------------ */
-/* Icons — lucide-react, sized/stroked to match the previous hand-drawn */
-/* set so nothing shifts visually.                                     */
-/* ------------------------------------------------------------------ */
+//lucide icons
 
 function LocationIcon() {
   return <MapPin size={16} strokeWidth={1.6} className="text-ink-soft" />;
@@ -77,9 +74,7 @@ function CloseIcon() {
   return <X size={20} strokeWidth={1.8} />;
 }
 
-/* ------------------------------------------------------------------ */
-/* Modal                                                                */
-/* ------------------------------------------------------------------ */
+//modal
 
 export default function CreatePostModal({
   isOpen,

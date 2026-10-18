@@ -56,15 +56,30 @@ export async function GET(req: NextRequest) {
                     caption: 1,
                     location: 1,
                     tags: 1,
-                    createdAt: 1
+                    createdAt: 1,
                 }
-            }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "userId",
+                    foreignField: "_id",
+                    as: "author",
+                },
+            },
+            { $unwind: "$author" },
+            {
+                $project: {
+                    _id: 1, userId: 1, imgUrls: 1, caption: 1, location: 1, tags: 1, createdAt: 1,
+                    author: { _id: "$author._id", name: "$author.name", userName: "$author.userName", imgUrl: "$author.imgUrl" },
+                },
+            },
         ])
 
         console.log(users)
         console.log(tours)
 
-        return NextResponse.json({ success: true, msg: "Initial data fetched successfully", users, tours }, { status: 200 })
+        return NextResponse.json({ success: true, msg: "Initial data fetched successfully", currentUser: { _id: decoded._id, userName: decoded.userName }, users, tours }, { status: 200 })
 
     } catch (error: any) {
         console.error(error);

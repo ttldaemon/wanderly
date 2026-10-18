@@ -1,8 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { MapPin, RotateCcw, Search, Users, X } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { Compass, MapPin, RotateCcw, Search, Users, X } from "lucide-react";
 import { SearchMode, TourPost, UserSummary } from "@/types/wanderly";
+import { buildSearchEndpoint } from "@/utils/search";
+
+export { buildSearchEndpoint };
 
 interface RightPanelProps {
   recommendedUsers: UserSummary[];
@@ -13,6 +16,7 @@ interface RightPanelProps {
   onSelectUser: (user: UserSummary) => void;
   onLocationResults?: (tours: TourPost[], locationQuery: string) => void;
   onClearLocationSearch?: () => void;
+  onLocationSearching?: (isSearching: boolean, locationQuery: string) => void;
 }
 
 function getUserInitials(name = "") {
@@ -20,19 +24,6 @@ function getUserInitials(name = "") {
   if (parts.length === 0) return "W";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-export function buildSearchEndpoint(rawQuery: string, mode: SearchMode = "users") {
-  const trimmed = rawQuery.trim();
-  if (!trimmed) return null;
-
-  if (trimmed.startsWith("@")) {
-    const cleanUser = trimmed.slice(1).trim();
-    return cleanUser ? `/api/search?userName=${encodeURIComponent(cleanUser)}` : null;
-  }
-
-  const param = mode === "places" ? "location" : "userName";
-  return `/api/search?${param}=${encodeURIComponent(trimmed)}`;
 }
 
 export default function RightPanel({
@@ -44,6 +35,7 @@ export default function RightPanel({
   onSelectUser,
   onLocationResults,
   onClearLocationSearch,
+  onLocationSearching,
 }: RightPanelProps) {
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<SearchMode>("users");
@@ -51,66 +43,141 @@ export default function RightPanel({
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
+  // Reference to abort controller for in-flight requests
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   useEffect(() => {
-    const endpoint = buildSearchEndpoint(query, mode);
+    const trimmed = query.trim();
+
+    // If query is empty, reset search state immediately
+    if (!trimmed) {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      setSearchedUsers(null);
+      setSearchError(null);
+      setSearching(false);
+      onLocationSearching?.(false, "");
+      onClearLocationSearch?.();
+      return;
+    }
+
+    const endpoint = buildSearchEndpoint(trimmed, mode);
     if (!endpoint) {
       setSearchedUsers(null);
       setSearchError(null);
       setSearching(false);
+      onLocationSearching?.(false, "");
       return;
     }
 
+    // Indicate searching state immediately while debouncing
+    setSearching(true);
+    setSearchError(null);
+    if (mode === "places") {
+      onLocationSearching?.(true, trimmed);
+    }
+
+    // 1.5-second (1500ms) debounce delay
     const timer = setTimeout(async () => {
-      setSearching(true);
-      setSearchError(null);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
       try {
-        const res = await fetch(endpoint);
+        const res = await fetch(endpoint, { signal: controller.signal });
         const payload = await res.json();
 
         if (!res.ok || !payload.success) {
           setSearchError(payload.msg || "Could not complete search");
+          if (mode === "places") {
+            onLocationResults?.([], trimmed);
+          }
           return;
         }
 
         if (payload.isUsersData) {
           setSearchedUsers(payload.data || []);
-        } else if (onLocationResults) {
-          onLocationResults(payload.data || [], query.trim());
+        } else {
+          onLocationResults?.(payload.data || [], trimmed);
         }
-      } catch {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
         setSearchError("Network error while searching");
+        if (mode === "places") {
+          onLocationResults?.([], trimmed);
+        }
       } finally {
         setSearching(false);
+        if (mode === "places") {
+          onLocationSearching?.(false, trimmed);
+        }
       }
-    }, 300);
+    }, 1500);
 
-    return () => clearTimeout(timer);
-  }, [query, mode]);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [query, mode, onLocationResults, onClearLocationSearch, onLocationSearching]);
 
   function handleClearSearch() {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
     setQuery("");
     setSearchedUsers(null);
     setSearchError(null);
+    setSearching(false);
+    onLocationSearching?.(false, "");
     onClearLocationSearch?.();
+  }
+
+  function handleModeChange(newMode: SearchMode) {
+    if (newMode === mode) return;
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    setMode(newMode);
+    setSearchError(null);
+
+    if (newMode === "places") {
+      // Switching to places: reset searched users so recommended box shows recommended users
+      setSearchedUsers(null);
+    } else {
+      // Switching to users: clear center location results
+      onClearLocationSearch?.();
+      onLocationSearching?.(false, "");
+    }
   }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
   }
 
-  const displayedUsers = searchedUsers !== null ? searchedUsers : recommendedUsers;
-  const isLoading = loadingInitials || (searching && mode === "users");
+  const displayedUsers =
+    mode === "users" && searchedUsers !== null
+      ? searchedUsers
+      : recommendedUsers;
+
+  const isUsersLoading =
+    loadingInitials || (searching && mode === "users" && query.trim().length > 0);
 
   return (
     <aside
-      aria-label="Search and Recommended Users"
+      aria-label="Search and Discovery"
       className="sticky top-0 hidden h-screen w-80 shrink-0 flex-col gap-5 overflow-y-auto border-l border-sand bg-cream px-5 py-6 lg:flex xl:w-96"
     >
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
+        {/* Search Bar with 1.5s Debounce */}
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-2.5 rounded-full border border-sand bg-white/80 px-4 py-2.5 transition focus-within:border-forest focus-within:bg-white"
+          className="flex items-center gap-2.5 rounded-full border border-sand bg-white/80 px-4 py-2.5 transition focus-within:border-forest focus-within:bg-white focus-within:shadow-xs"
         >
           <Search size={18} className="shrink-0 text-ink-soft" />
           <input
@@ -118,7 +185,7 @@ export default function RightPanel({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={
-              mode === "users" ? "Search users..." : "Search places..."
+              mode === "users" ? "Search users by username..." : "Search places or destinations..."
             }
             aria-label="Search Wanderly"
             className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-faint"
@@ -128,54 +195,78 @@ export default function RightPanel({
               type="button"
               aria-label="Clear search"
               onClick={handleClearSearch}
-              className="flex h-5 w-5 items-center justify-center rounded-full bg-cream-200 text-ink-muted hover:bg-sand"
+              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cream-200 text-ink-muted hover:bg-sand transition"
             >
               <X size={12} />
             </button>
           )}
         </form>
 
-        <div className="flex items-center gap-2 px-1">
+        {/* Segmented Toggle Control: Users vs Places */}
+        <div
+          role="radiogroup"
+          aria-label="Search target mode"
+          className="relative flex w-full items-center rounded-full border border-sand bg-cream-100/70 p-1 shadow-xs"
+        >
           <button
             type="button"
-            onClick={() => {
-              setMode("users");
-              onClearLocationSearch?.();
-            }}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${
+            role="radio"
+            aria-checked={mode === "users"}
+            onClick={() => handleModeChange("users")}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 text-xs font-semibold transition-all duration-200 ${
               mode === "users"
-                ? "bg-forest text-white"
-                : "bg-cream-100 text-ink-muted hover:bg-cream-200"
+                ? "bg-forest text-white shadow-xs"
+                : "text-ink-muted hover:text-ink"
             }`}
           >
-            <Users size={12} />
+            <Users size={13} />
             <span>Users</span>
           </button>
 
           <button
             type="button"
-            onClick={() => {
-              setMode("places");
-              setSearchedUsers(null);
-            }}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition ${
+            role="radio"
+            aria-checked={mode === "places"}
+            onClick={() => handleModeChange("places")}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-1.5 text-xs font-semibold transition-all duration-200 ${
               mode === "places"
-                ? "bg-forest text-white"
-                : "bg-cream-100 text-ink-muted hover:bg-cream-200"
+                ? "bg-forest text-white shadow-xs"
+                : "text-ink-muted hover:text-ink"
             }`}
           >
-            <MapPin size={12} />
+            <MapPin size={13} />
             <span>Places</span>
           </button>
         </div>
+
+        {/* Hint banner when searching places */}
+        {mode === "places" && query.trim() && (
+          <div className="flex items-center gap-2 rounded-xl bg-forest/5 border border-forest/15 px-3 py-2 text-xs text-forest">
+            <Compass size={14} className="shrink-0 animate-spin-slow" />
+            <span className="truncate">
+              {searching
+                ? `Searching places for "${query.trim()}"...`
+                : `Place results are displayed in the center feed`}
+            </span>
+          </div>
+        )}
       </div>
 
+      {/* Recommended / Searched Users Box */}
       <section className="flex flex-col rounded-2xl border border-sand bg-cream-100/60 p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold text-ink">
-            {searchedUsers !== null ? "Search results" : "Recommended users"}
-          </h2>
-          {searchedUsers !== null && (
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-ink">
+              {mode === "users" && searchedUsers !== null
+                ? "Search results"
+                : "Recommended users"}
+            </h2>
+            {mode === "users" && searching && (
+              <span className="h-2 w-2 rounded-full bg-forest animate-ping" />
+            )}
+          </div>
+
+          {mode === "users" && searchedUsers !== null && (
             <button
               type="button"
               onClick={handleClearSearch}
@@ -186,7 +277,8 @@ export default function RightPanel({
           )}
         </div>
 
-        {(initialsError || searchError) && (
+        {/* Search or Initials Error Message */}
+        {(initialsError || (mode === "users" && searchError)) && (
           <div className="mb-3 flex items-center justify-between rounded-xl bg-clay-light px-3 py-2.5 text-xs text-clay">
             <span>{searchError || initialsError}</span>
             {onRetryInitials && !searchError && (
@@ -202,7 +294,8 @@ export default function RightPanel({
           </div>
         )}
 
-        {isLoading ? (
+        {/* User List: Loading Skeletons */}
+        {isUsersLoading ? (
           <div className="flex flex-col gap-3">
             {Array.from({ length: 5 }).map((_, index) => (
               <div

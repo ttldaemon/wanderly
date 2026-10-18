@@ -6,7 +6,6 @@ import { Types } from "mongoose";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  try {
     let decoded;
     try {
         await connectDB()
@@ -82,9 +81,9 @@ export async function GET() {
 
         return NextResponse.json({ success: true, msg: "Initial data fetched successfully", currentUser: { _id: decoded._id, userName: decoded.userName }, users, tours }, { status: 200 })
 
-    } catch (error: any) {
+    } catch (error: unknowm) {
         console.error(error);
         return NextResponse.json({ message: "Internal Server Error", error: error.message }, { status: 500 })
     }
-
+  
 }

@@ -3,10 +3,11 @@ import { Tour } from "@/models/tour";
 import { User } from "@/models/user";
 import { verifyToken } from "@/utils/helpers";
 import { Types } from "mongoose";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-// the initial fetch for the user, some random recommended users profile and some recommended tours
-export async function GET(req: NextRequest) {
+export async function GET() {
+  try {
+    let decoded;
     try {
         await connectDB()
         const decoded = await verifyToken()

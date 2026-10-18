@@ -9,6 +9,14 @@ import PlaceCard from "@/components/PlaceCard";
 import CreatePostModal from "@/components/Createpostmodal";
 import { NavTab, TourPost, UserSummary } from "@/types/wanderly";
 
+const FALLBACK_USERS: UserSummary[] = [
+  { _id: "u1", name: "Aarav Sharma", userName: "aarav_travels" },
+  { _id: "u2", name: "Meera Nair", userName: "meerawanders" },
+  { _id: "u3", name: "Rohan Verma", userName: "rohan_peaks" },
+  { _id: "u4", name: "Kabir Joshi", userName: "kabir_trails" },
+  { _id: "u5", name: "Ananya Roy", userName: "ananya_nomad" },
+];
+
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<NavTab>("home");
   const [postModalOpen, setPostModalOpen] = useState(false);

@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { Compass, MapPin, RotateCcw, Search, Users, X } from "lucide-react";
 import { SearchMode, TourPost, UserSummary } from "@/types/wanderly";
 import { buildSearchEndpoint } from "@/utils/search";
+import {getUserInitials} from "@/utils/utilityFn"
+import UserAvatar from "./ui/UserAvatar";
 
 export { buildSearchEndpoint };
 
@@ -19,12 +21,6 @@ interface RightPanelProps {
   onLocationSearching?: (isSearching: boolean, locationQuery: string) => void;
 }
 
-function getUserInitials(name = "") {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "W";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
 
 export default function RightPanel({
   recommendedUsers,
@@ -329,32 +325,13 @@ export default function RightPanel({
                     type="button"
                     onClick={() => onSelectUser(user)}
                     className={[
-                      "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition",
+                      "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition",
                       isSelected
                         ? "bg-cream-200 ring-1 ring-forest/30"
                         : "hover:bg-cream-200/70",
                     ].join(" ")}
                   >
-                    {user.imgUrl ? (
-                      <img
-                        src={user.imgUrl}
-                        alt={user.name}
-                        className="h-10 w-10 shrink-0 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-forest text-xs font-semibold text-white">
-                        {getUserInitials(user.name)}
-                      </div>
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-ink">
-                        {user.name}
-                      </p>
-                      <p className="truncate text-xs text-ink-soft">
-                        @{user.userName}
-                      </p>
-                    </div>
+                    <UserAvatar user={user} />
 
                     <span className="rounded-full border border-sand-dark bg-white/80 px-3 py-1 text-xs font-medium text-ink transition group-hover:border-forest">
                       View

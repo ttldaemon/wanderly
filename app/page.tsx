@@ -21,17 +21,11 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<NavTab>("home");
   const [postModalOpen, setPostModalOpen] = useState(false);
 
-  const [currentUser, setCurrentUser] = useState<UserSummary>({
-    _id: "current-user",
-    name: "Wanderer",
-    userName: "wanderer",
-  });
-
+  const [currentUser, setCurrentUser] = useState<UserSummary | null>(null);
   const [recommendedUsers, setRecommendedUsers] = useState<UserSummary[]>([]);
   const [initialTours, setInitialTours] = useState<TourPost[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null);
 
-  // Place/Location Search State for Middle Feed
   const [locationResults, setLocationResults] = useState<{
     query: string;
     tours: TourPost[];
@@ -42,19 +36,22 @@ export default function HomePage() {
   const router = useRouter();
   const [loadingInitials, setLoadingInitials] = useState(true);
 
+
+  
   const fetchInitialData = useCallback(async () => {
-    setLoadingInitials(true);
     try {
       const res = await fetch("/api/initials");
+     
       if (res.status === 401) {
         router.push("/register");
         return;
       }
       if (res.ok) {
         const data = await res.json();
+         console.log(data)
         if (data.currentUser) {
           setCurrentUser({
-            _id: String(data.currentUser._id),
+            _id: data.currentUser._id,
             name: data.currentUser.name,
             userName: data.currentUser.userName,
             imgUrl: data.currentUser.imgUrl,
@@ -63,9 +60,7 @@ export default function HomePage() {
           router.push("/register");
           return;
         }
-        setRecommendedUsers(
-          data.users?.length ? data.users : FALLBACK_USERS,
-        );
+        setRecommendedUsers(data.users?.length ? data.users : FALLBACK_USERS);
         if (data.tours?.length) {
           setInitialTours(data.tours);
         }
@@ -80,10 +75,11 @@ export default function HomePage() {
     }
   }, [router]);
 
+
   useEffect(() => {
     fetchInitialData();
   }, [fetchInitialData]);
-
+  
   function handleSelectTab(tab: NavTab) {
     setActiveTab(tab);
     setSelectedUser(null);
@@ -181,7 +177,8 @@ export default function HomePage() {
                 <div className="flex items-center justify-between text-xs text-ink-soft">
                   <span>
                     Found {locationResults.tours.length}{" "}
-                    {locationResults.tours.length === 1 ? "place" : "places"} matching &ldquo;{locationResults.query}&rdquo;
+                    {locationResults.tours.length === 1 ? "place" : "places"}{" "}
+                    matching &ldquo;{locationResults.query}&rdquo;
                   </span>
                   <button
                     type="button"
@@ -203,7 +200,8 @@ export default function HomePage() {
                 </div>
                 <h2 className="text-lg font-bold text-ink">No places found</h2>
                 <p className="mt-1.5 max-w-sm text-sm text-ink-soft">
-                  We couldn&apos;t find any public tours or places matching &ldquo;{locationResults.query}&rdquo;.
+                  We couldn&apos;t find any public tours or places matching
+                  &ldquo;{locationResults.query}&rdquo;.
                 </p>
                 <button
                   type="button"
@@ -214,7 +212,9 @@ export default function HomePage() {
                 </button>
               </section>
             )
-          ) : initialTours.length > 0 && activeTab === "home" && !selectedUser ? (
+          ) : initialTours.length > 0 &&
+            activeTab === "home" &&
+            !selectedUser ? (
             /* Home Feed with Initial Public Tours */
             <div className="flex flex-col gap-6 p-5">
               {initialTours.map((tour) => (
@@ -267,14 +267,16 @@ export default function HomePage() {
       </div>
 
       {/* Post Creation Modal */}
-      <CreatePostModal
-        isOpen={postModalOpen}
-        onClose={() => setPostModalOpen(false)}
-        userId={currentUser._id}
-        onPosted={() => {
-          fetchInitialData();
-        }}
-      />
+      {currentUser && (
+        <CreatePostModal
+          isOpen={postModalOpen}
+          onClose={() => setPostModalOpen(false)}
+          userId={currentUser._id}
+          onPosted={() => {
+            fetchInitialData();
+          }}
+        />
+      )}
     </div>
   );
 }

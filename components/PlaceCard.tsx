@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight, Image as ImageIcon, MapPin, Tag } from "lucide-react";
-import { TourPost } from "@/types/wanderly";
+import { TourFeed } from "@/types/wanderly";
+import Image from "next/image";
+import UserAvatar from "./ui/UserAvatar";
 
 interface PlaceCardProps {
-  tour: TourPost;
+  tour: TourFeed;
 }
 
 function formatDate(dateString: string) {
@@ -47,14 +49,7 @@ export default function PlaceCard({ tour }: PlaceCardProps) {
     >
       {/* Card Header: Location & Timestamp */}
       <div className="flex items-center justify-between border-b border-sand/60 px-5 py-3.5 bg-cream/30">
-        <div className="flex items-center gap-2 text-forest">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-forest/10">
-            <MapPin size={16} className="text-forest" />
-          </div>
-          <span className="text-sm font-semibold tracking-tight text-ink">
-            {tour.location}
-          </span>
-        </div>
+      <UserAvatar user={tour.author} />
 
         <div className="flex items-center gap-1.5 text-xs text-ink-soft">
           <Calendar size={13} />
@@ -64,11 +59,12 @@ export default function PlaceCard({ tour }: PlaceCardProps) {
 
       {/* Card Media Section */}
       {images.length > 0 ? (
-        <div className="relative aspect-[16/10] w-full overflow-hidden bg-sand/30">
-          <img
+        <div className="relative aspect-16/10 w-full overflow-hidden bg-sand/30">
+          <Image
             src={images[currentImageIndex]}
             alt={`${tour.location} snapshot ${currentImageIndex + 1}`}
             className="h-full w-full object-cover transition duration-300"
+            fill
             loading="lazy"
           />
 
@@ -100,7 +96,7 @@ export default function PlaceCard({ tour }: PlaceCardProps) {
           )}
         </div>
       ) : (
-        <div className="flex aspect-[16/9] w-full flex-col items-center justify-center bg-cream-100/50 text-ink-muted">
+        <div className="flex aspect-video w-full flex-col items-center justify-center bg-cream-100/50 text-ink-muted">
           <ImageIcon size={32} className="opacity-40" />
           <span className="mt-2 text-xs">No photos attached</span>
         </div>
@@ -114,10 +110,18 @@ export default function PlaceCard({ tour }: PlaceCardProps) {
           </p>
         )}
 
+        <div className="flex items-center gap-2 text-forest">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-forest/10">
+            <MapPin size={16} className="text-forest" />
+          </div>
+          <span className="text-sm font-semibold tracking-tight text-ink">
+            {tour.location}
+          </span>
+        </div>
+
         {/* Tags */}
         {tour.tags && tour.tags.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <Tag size={13} className="mr-0.5 text-ink-soft" />
             {tour.tags.map((tag, idx) => {
               const cleanTag = tag.trim().replace(/^#/, "");
               if (!cleanTag) return null;

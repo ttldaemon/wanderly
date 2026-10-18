@@ -6,18 +6,13 @@ import { Compass, Feather, Home, LogOut, User } from "lucide-react";
 import Button from "./ui/Button";
 import { NavTab, UserSummary } from "@/types/wanderly";
 
+import UserAvatar from "./ui/UserAvatar";
+
 interface LeftPanelProps {
   activeTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
   onOpenPostModal: () => void;
   currentUser?: UserSummary | null;
-}
-
-function getUserInitials(name = "") {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "W";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 export default function LeftPanel({
@@ -125,26 +120,8 @@ export default function LeftPanel({
         </div>
 
         {currentUser && (
-          <div className="flex items-center gap-3 rounded-full border border-sand bg-cream-100/70 p-2.5 xl:px-4 xl:py-3">
-            {currentUser.imgUrl ? (
-              <img
-                src={currentUser.imgUrl}
-                alt={currentUser.name}
-                className="h-10 w-10 shrink-0 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-forest text-sm font-semibold text-white">
-                {getUserInitials(currentUser.name)}
-              </div>
-            )}
-            <div className="hidden min-w-0 flex-1 xl:block">
-              <p className="truncate text-sm font-semibold text-ink">
-                {currentUser.name}
-              </p>
-              <p className="truncate text-xs text-ink-soft">
-                @{currentUser.userName}
-              </p>
-            </div>
+          <div className="flex items-center max-xl:justify-center rounded-full border border-sand py-2 bg-cream-100/70 xl:px-4 xl:py-3">
+            <UserAvatar user={currentUser} isLeftPanel/>
           </div>
         )}
       </aside>

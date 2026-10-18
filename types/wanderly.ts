@@ -16,5 +16,16 @@ export interface TourPost {
   createdAt: string;
 }
 
+export interface TourFeed {
+  _id: string;
+  userId: string;
+  imgUrls: string[];
+  caption: string;
+  location: string;
+  tags: string[];
+  createdAt: string;
+  author: UserSummary
+}
+
 export type NavTab = "home" | "your-posts";
 export type SearchMode = "users" | "places";

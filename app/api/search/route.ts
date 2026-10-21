@@ -69,20 +69,60 @@ export async function GET(req: NextRequest) {
       }));
     } else if (location) {
       const safePattern = escapeRegex(location.trim());
-      const tours = await Tour.find({
-        location: { $regex: safePattern, $options: "i" },
-        visibility: "public",
-      }).lean();
 
-      data = tours.map((item) => ({
-        _id: item._id.toString(),
-        userId: item.userId.toString(),
-        imgUrls: item.imgUrls,
-        caption: item.caption,
-        location: item.location,
-        tags: item.tags,
-        createdAt: item.createdAt,
-      }));
+      const tours = await Tour.aggregate([
+        {
+          $match: {
+            location: { $regex: safePattern, $options: "i" },
+            visibility: "public",
+          },
+        },
+        {
+          $sample: { size: 20 },
+        },
+        {
+          $project: {
+            _id: 1,
+            userId: 1,
+            imgUrls: 1,
+            caption: 1,
+            location: 1,
+            tags: 1,
+            createdAt: 1,
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "author",
+          },
+        },
+        { $unwind: "$author" },
+        {
+          $project: {
+            _id: 1,
+            userId: 1,
+            imgUrls: 1,
+            caption: 1,
+            location: 1,
+            tags: 1,
+            createdAt: 1,
+            author: {
+              _id: "$author._id",
+              name: "$author.name",
+              userName: "$author.userName",
+              imgUrl: "$author.imgUrl",
+            },
+          },
+        },
+      ]);
+
+
+      data = tours
+
+      console.log(data)
     }
 
     return NextResponse.json(

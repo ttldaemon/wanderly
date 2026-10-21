@@ -95,7 +95,6 @@ export async function GET() {
       {
         success: true,
         msg: "Initial data fetched successfully",
-        currentUser: { _id: decoded._id, userName: decoded.userName },
         users,
         tours,
       },
@@ -104,7 +103,7 @@ export async function GET() {
   } catch (error: unknowm) {
     console.error(error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
+      { msg: "Internal Server Error", error: error.message },
       { status: 500 },
     );
   }

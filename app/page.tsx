@@ -8,20 +8,15 @@ import RightPanel from "@/components/RightPanel";
 import PlaceCard from "@/components/PlaceCard";
 import CreatePostModal from "@/components/Createpostmodal";
 import { NavTab, TourPost, UserSummary } from "@/types/wanderly";
-
-const FALLBACK_USERS: UserSummary[] = [
-  { _id: "u1", name: "Aarav Sharma", userName: "aarav_travels" },
-  { _id: "u2", name: "Meera Nair", userName: "meerawanders" },
-  { _id: "u3", name: "Rohan Verma", userName: "rohan_peaks" },
-  { _id: "u4", name: "Kabir Joshi", userName: "kabir_trails" },
-  { _id: "u5", name: "Ananya Roy", userName: "ananya_nomad" },
-];
+import { useAuth } from "@/context/authContext";
+import EmptyLocationResult from "@/components/ui/EmptyLocationResult";
+import SkeletonLocSearch from "@/components/ui/SkeletonLocSearch";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<NavTab>("home");
   const [postModalOpen, setPostModalOpen] = useState(false);
 
-  const [currentUser, setCurrentUser] = useState<UserSummary | null>(null);
+  const { user } = useAuth();
   const [recommendedUsers, setRecommendedUsers] = useState<UserSummary[]>([]);
   const [initialTours, setInitialTours] = useState<TourPost[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null);
@@ -36,34 +31,15 @@ export default function HomePage() {
   const router = useRouter();
   const [loadingInitials, setLoadingInitials] = useState(true);
 
-
-  
   const fetchInitialData = useCallback(async () => {
     try {
       const res = await fetch("/api/initials");
-     
-      if (res.status === 401) {
-        router.push("/register");
-        return;
-      }
+
       if (res.ok) {
         const data = await res.json();
-         console.log(data)
-        if (data.currentUser) {
-          setCurrentUser({
-            _id: data.currentUser._id,
-            name: data.currentUser.name,
-            userName: data.currentUser.userName,
-            imgUrl: data.currentUser.imgUrl,
-          });
-        } else {
-          router.push("/register");
-          return;
-        }
-        setRecommendedUsers(data.users?.length ? data.users : FALLBACK_USERS);
-        if (data.tours?.length) {
-          setInitialTours(data.tours);
-        }
+        console.log(data);
+        setRecommendedUsers(data.users?.length ? data.users : []);
+        setInitialTours(data.tours?.length ? data.tours : [])
       } else {
         router.push("/register");
         return;
@@ -75,11 +51,10 @@ export default function HomePage() {
     }
   }, [router]);
 
-
   useEffect(() => {
     fetchInitialData();
   }, [fetchInitialData]);
-  
+
   function handleSelectTab(tab: NavTab) {
     setActiveTab(tab);
     setSelectedUser(null);
@@ -95,11 +70,27 @@ export default function HomePage() {
     setPlaceSearchQuery("");
   }
 
-  function handleClearLocationSearch() {
+  const handleClearLocationSearch = useCallback(() => {
     setLocationResults(null);
     setIsSearchingPlaces(false);
     setPlaceSearchQuery("");
-  }
+  }, [])
+
+  const handleLocationSearching = useCallback(
+    (isSearching: boolean, locationQuery: string) => {
+      setIsSearchingPlaces(isSearching);
+      setPlaceSearchQuery(locationQuery);
+    },
+    [],
+  );
+
+  const handleLocationResults = useCallback(
+    (tours: TourPost[], locationQuery: string) => {
+      setLocationResults({ query: locationQuery, tours });
+    },
+    [],
+  );
+
 
   const feedTitle = isSearchingPlaces
     ? `Searching places for "${placeSearchQuery}"...`
@@ -119,7 +110,7 @@ export default function HomePage() {
           activeTab={activeTab}
           onSelectTab={handleSelectTab}
           onOpenPostModal={() => setPostModalOpen(true)}
-          currentUser={currentUser}
+          currentUser={user}
         />
 
         {/* Center Main Column: Dynamic Feed and Place Search Results */}
@@ -145,73 +136,16 @@ export default function HomePage() {
             )}
           </header>
 
-          {/* Middle Portion: Dynamic Content State Machine */}
-          {isSearchingPlaces ? (
-            /* Loading State for Places Search */
-            <div className="flex flex-col gap-6 p-5">
-              <div className="flex items-center gap-2 text-xs font-medium text-ink-soft">
-                <div className="h-2 w-2 rounded-full bg-forest animate-ping" />
-                <span>Searching destinations...</span>
-              </div>
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="flex animate-pulse flex-col rounded-2xl border border-sand bg-white/70 p-5 shadow-xs"
-                >
-                  <div className="mb-4 flex items-center justify-between">
-                    <div className="h-4 w-36 rounded-md bg-sand" />
-                    <div className="h-3 w-20 rounded-md bg-sand/70" />
-                  </div>
-                  <div className="aspect-[16/10] w-full rounded-xl bg-sand/40" />
-                  <div className="mt-4 space-y-2">
-                    <div className="h-3.5 w-full rounded-md bg-sand/60" />
-                    <div className="h-3.5 w-3/4 rounded-md bg-sand/50" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : locationResults ? (
+          {/* Middle Portion*/}
+          {isSearchingPlaces ? <SkeletonLocSearch /> : locationResults ? (
             /* Search Results for Places */
             locationResults.tours.length > 0 ? (
               <div className="flex flex-col gap-6 p-5">
-                <div className="flex items-center justify-between text-xs text-ink-soft">
-                  <span>
-                    Found {locationResults.tours.length}{" "}
-                    {locationResults.tours.length === 1 ? "place" : "places"}{" "}
-                    matching &ldquo;{locationResults.query}&rdquo;
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleClearLocationSearch}
-                    className="font-semibold text-forest hover:underline"
-                  >
-                    Clear search
-                  </button>
-                </div>
                 {locationResults.tours.map((tour) => (
                   <PlaceCard key={tour._id} tour={tour} />
                 ))}
               </div>
-            ) : (
-              /* Empty State for Place Search */
-              <section className="flex flex-col items-center justify-center px-6 py-24 text-center">
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-cream-200 text-forest shadow-xs">
-                  <MapPin size={28} />
-                </div>
-                <h2 className="text-lg font-bold text-ink">No places found</h2>
-                <p className="mt-1.5 max-w-sm text-sm text-ink-soft">
-                  We couldn&apos;t find any public tours or places matching
-                  &ldquo;{locationResults.query}&rdquo;.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleClearLocationSearch}
-                  className="mt-6 rounded-full bg-forest px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-forest-dark"
-                >
-                  Clear Search
-                </button>
-              </section>
-            )
+            ) : <EmptyLocationResult query={locationResults.query} handleClearLocationSearch={handleClearLocationSearch} />
           ) : initialTours.length > 0 &&
             activeTab === "home" &&
             !selectedUser ? (
@@ -255,23 +189,18 @@ export default function HomePage() {
           onRetryInitials={fetchInitialData}
           selectedUserId={selectedUser?._id}
           onSelectUser={handleSelectRecommendedUser}
-          onLocationResults={(tours, locationQuery) =>
-            setLocationResults({ query: locationQuery, tours })
-          }
+          onLocationResults={handleLocationResults}
           onClearLocationSearch={handleClearLocationSearch}
-          onLocationSearching={(isSearching, locationQuery) => {
-            setIsSearchingPlaces(isSearching);
-            setPlaceSearchQuery(locationQuery);
-          }}
+          onLocationSearching={handleLocationSearching}
         />
       </div>
 
       {/* Post Creation Modal */}
-      {currentUser && (
+      {user && (
         <CreatePostModal
           isOpen={postModalOpen}
           onClose={() => setPostModalOpen(false)}
-          userId={currentUser._id}
+          userId={user._id}
           onPosted={() => {
             fetchInitialData();
           }}

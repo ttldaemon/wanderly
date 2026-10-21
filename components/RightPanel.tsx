@@ -33,6 +33,7 @@ export default function RightPanel({
   onClearLocationSearch,
   onLocationSearching,
 }: RightPanelProps) {
+  
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<SearchMode>("users");
   const [searchedUsers, setSearchedUsers] = useState<UserSummary[] | null>(null);
@@ -117,6 +118,7 @@ export default function RightPanel({
 
     return () => {
       clearTimeout(timer);
+      abortControllerRef.current?.abort();
     };
   }, [query, mode, onLocationResults, onClearLocationSearch, onLocationSearching]);
 

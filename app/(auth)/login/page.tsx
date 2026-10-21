@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Caveat } from "next/font/google";
 import { User, Lock, Eye, EyeOff, Mountain } from "lucide-react";
 import { TextInput } from "@/components/ui/TextInput";
 import Button from "@/components/ui/Button";
+import { useAuth } from "@/context/authContext";
 
 const caveat = Caveat({
   subsets: ["latin"],
@@ -19,13 +20,24 @@ export default function LoginPage() {
     password: "",
   });
 
+  const {isAuthenticated, isLoadingAuth, setUser } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!isLoadingAuth && isAuthenticated) {
+      router.replace("/");
+    }
+  }, [isAuthenticated, isLoadingAuth, router]);
+
+  console.log(isAuthenticated, isLoadingAuth)
+
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError("");
 
@@ -51,8 +63,15 @@ export default function LoginPage() {
       setLoading(false);
 
       if (!res.ok || !data.success) {
-        return setError(data.msg || data.error || "Login failed. Please check your credentials.");
+        return setError(
+          data.msg ||
+            data.error ||
+            "Login failed. Please check your credentials.",
+        );
       }
+
+      setUser(data.user);
+      // console.log(data.user)
 
       router.push("/");
     } catch (err) {
@@ -74,10 +93,15 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-[420px] rounded-[36px] bg-cream/95 backdrop-blur-md shadow-2xl border border-sand p-7 sm:p-9 flex flex-col items-center">
         {/* Brand Header */}
         <div className="flex items-center justify-center gap-2 mb-1.5">
-          <span className={`${caveat.className} text-4xl sm:text-5xl text-forest font-bold tracking-wide drop-shadow-sm`}>
+          <span
+            className={`${caveat.className} text-4xl sm:text-5xl text-forest font-bold tracking-wide drop-shadow-sm`}
+          >
             Wanderly
           </span>
-          <Mountain className="w-8 h-8 sm:w-9 sm:h-9 text-forest" strokeWidth={1.75} />
+          <Mountain
+            className="w-8 h-8 sm:w-9 sm:h-9 text-forest"
+            strokeWidth={1.75}
+          />
         </div>
 
         {/* Title & Subtitle */}
@@ -119,7 +143,11 @@ export default function LoginPage() {
               aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink transition-colors cursor-pointer"
             >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
             </button>
           </div>
 

@@ -7,6 +7,7 @@ import Button from "./ui/Button";
 import { NavTab, UserSummary } from "@/types/wanderly";
 
 import UserAvatar from "./ui/UserAvatar";
+import { useAuth } from "@/context/authContext";
 
 interface LeftPanelProps {
   activeTab: NavTab;
@@ -23,12 +24,14 @@ export default function LeftPanel({
 }: LeftPanelProps) {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const { setUser } = useAuth();
 
   async function handleLogout() {
     if (loggingOut) return;
     setLoggingOut(true);
     try {
       await fetch("/api/logout", { method: "POST" });
+      setUser(null);
       router.push("/login");
     } catch {
       setLoggingOut(false);
@@ -114,6 +117,7 @@ export default function LeftPanel({
               onClick={onOpenPostModal}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-forest text-white shadow-md transition hover:bg-forest-dark xl:hidden"
             >
+              LeftPanel
               <Feather size={20} />
             </button>
           </div>
@@ -121,7 +125,7 @@ export default function LeftPanel({
 
         {currentUser && (
           <div className="flex items-center max-xl:justify-center rounded-full border border-sand py-2 bg-cream-100/70 xl:px-4 xl:py-3">
-            <UserAvatar user={currentUser} isLeftPanel/>
+            <UserAvatar user={currentUser} isLeftPanel />
           </div>
         )}
       </aside>

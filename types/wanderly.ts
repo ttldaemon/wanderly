@@ -24,7 +24,7 @@ export interface TourFeed {
   location: string;
   tags: string[];
   createdAt: string;
-  author: UserSummary
+  author: UserSummary;
 }
 
 export type NavTab = "home" | "your-posts";

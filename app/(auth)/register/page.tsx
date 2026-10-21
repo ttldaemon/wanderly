@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Caveat } from "next/font/google";
 import { User, Lock, Eye, EyeOff, Mountain } from "lucide-react";
 import { TextInput } from "@/components/ui/TextInput";
 import Button from "@/components/ui/Button";
+import { useAuth } from "@/context/authContext";
 
 const caveat = Caveat({
   subsets: ["latin"],
@@ -23,6 +24,8 @@ export default function RegisterPage() {
     agreeToTerms: false,
   });
 
+  const { isAuthenticated, isLoadingAuth } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
@@ -30,11 +33,18 @@ export default function RegisterPage() {
 
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!isLoadingAuth && isAuthenticated) {
+      router.replace("/");
+    }
+  }, [isAuthenticated, isLoadingAuth, router]);
+
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError("");
 
-    const { name, username, email, password, confirmPassword, agreeToTerms } = form;
+    const { name, username, email, password, confirmPassword, agreeToTerms } =
+      form;
 
     if (!name.trim() || !username.trim() || !password || !confirmPassword) {
       return setError("All fields are required");
@@ -49,7 +59,9 @@ export default function RegisterPage() {
     }
 
     if (!agreeToTerms) {
-      return setError("Please accept the Terms & Conditions and Privacy Policy");
+      return setError(
+        "Please accept the Terms & Conditions and Privacy Policy",
+      );
     }
 
     try {
@@ -61,7 +73,8 @@ export default function RegisterPage() {
         body: JSON.stringify({
           name: name.trim(),
           userName: username.trim(),
-          email: email.trim() || `${username.trim().toLowerCase()}@wanderly.com`,
+          email:
+            email.trim() || `${username.trim().toLowerCase()}@wanderly.com`,
           password,
         }),
       });
@@ -70,7 +83,9 @@ export default function RegisterPage() {
       setLoading(false);
 
       if (!res.ok || !data.success) {
-        return setError(data.msg || data.error || "Registration failed. Please try again.");
+        return setError(
+          data.msg || data.error || "Registration failed. Please try again.",
+        );
       }
 
       router.push("/login");
@@ -93,10 +108,15 @@ export default function RegisterPage() {
       <div className="relative z-10 w-full max-w-[420px] rounded-[36px] bg-cream/95 backdrop-blur-md shadow-2xl border border-sand p-7 sm:p-9 flex flex-col items-center">
         {/* Brand Header */}
         <div className="flex items-center justify-center gap-2 mb-1.5">
-          <span className={`${caveat.className} text-4xl sm:text-5xl text-forest font-bold tracking-wide drop-shadow-sm`}>
+          <span
+            className={`${caveat.className} text-4xl sm:text-5xl text-forest font-bold tracking-wide drop-shadow-sm`}
+          >
             Wanderly
           </span>
-          <Mountain className="w-8 h-8 sm:w-9 sm:h-9 text-forest" strokeWidth={1.75} />
+          <Mountain
+            className="w-8 h-8 sm:w-9 sm:h-9 text-forest"
+            strokeWidth={1.75}
+          />
         </div>
 
         {/* Title & Subtitle */}
@@ -149,7 +169,11 @@ export default function RegisterPage() {
               aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink transition-colors cursor-pointer"
             >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
             </button>
           </div>
 
@@ -160,7 +184,9 @@ export default function RegisterPage() {
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
               value={form.confirmPassword}
-              onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, confirmPassword: e.target.value })
+              }
               placeholder="Confirm Password"
               className="pr-8"
               required
@@ -168,10 +194,18 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+              aria-label={
+                showConfirmPassword
+                  ? "Hide confirm password"
+                  : "Show confirm password"
+              }
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink transition-colors cursor-pointer"
             >
-              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showConfirmPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
             </button>
           </div>
 
@@ -181,10 +215,15 @@ export default function RegisterPage() {
               type="checkbox"
               id="terms"
               checked={form.agreeToTerms}
-              onChange={(e) => setForm({ ...form, agreeToTerms: e.target.checked })}
+              onChange={(e) =>
+                setForm({ ...form, agreeToTerms: e.target.checked })
+              }
               className="mt-0.5 h-4 w-4 rounded border-sand text-forest focus:ring-forest accent-forest cursor-pointer"
             />
-            <label htmlFor="terms" className="text-xs text-ink-muted leading-relaxed cursor-pointer select-none">
+            <label
+              htmlFor="terms"
+              className="text-xs text-ink-muted leading-relaxed cursor-pointer select-none"
+            >
               I agree to the{" "}
               <span className="font-semibold text-ink underline underline-offset-2">
                 Terms &amp; Conditions

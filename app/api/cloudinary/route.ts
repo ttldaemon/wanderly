@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     API_SECRET,
   );
 
-  const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`;
+  const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`; // resource type is useful when you have to upload different types like som
 
   return NextResponse.json({
     success: true,

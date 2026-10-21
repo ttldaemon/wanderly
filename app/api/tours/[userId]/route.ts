@@ -1,11 +1,17 @@
 import { connectDB } from "@/lib/db";
 import { Tour } from "@/models/tour";
 import { verifyToken } from "@/utils/helpers";
+import { Types } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/mini";
 
 interface Params {
   userId: string;
+}
+
+interface GetMatchCondition {
+  userId: Types.ObjectId;
+  visibility?: "public" | "private";
 }
 
 const postTourSchema = z.object({
@@ -103,8 +109,9 @@ export async function GET(
   { params }: { params: Promise<Params> },
 ) {
   try {
+    let decoded;
     try {
-      await verifyToken();
+      decoded = await verifyToken();
     } catch {
       return NextResponse.json(
         { success: false, msg: "Unauthorized" },
@@ -114,7 +121,62 @@ export async function GET(
 
     await connectDB();
     const { userId } = await params;
-    const tours = await Tour.find({ userId });
+
+    const isOwnProfile = decoded._id === userId;
+
+    const matchCondition: GetMatchCondition = {
+      userId: new Types.ObjectId(userId),
+    };
+
+    if (!isOwnProfile) { // if we are searching for other profile tours then only the public one will be searched otherwise if user's own posts are searched then visibility criteria will not be applied
+      matchCondition.visibility = "public"; 
+    }
+
+    const tours = await Tour.aggregate([
+      {
+        $match: matchCondition,
+      },
+      {
+        $sample: { size: 20 },
+      },
+      {
+        $project: {
+          _id: 1,
+          userId: 1,
+          imgUrls: 1,
+          caption: 1,
+          location: 1,
+          tags: 1,
+          createdAt: 1,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "author",
+        },
+      },
+      { $unwind: "$author" },
+      {
+        $project: {
+          _id: 1,
+          userId: 1,
+          imgUrls: 1,
+          caption: 1,
+          location: 1,
+          tags: 1,
+          createdAt: 1,
+          author: {
+            _id: "$author._id",
+            name: "$author.name",
+            userName: "$author.userName",
+            imgUrl: "$author.imgUrl",
+          },
+        },
+      },
+    ]);
 
     return NextResponse.json(
       {

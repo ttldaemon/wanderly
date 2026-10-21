@@ -43,7 +43,15 @@ export async function POST(req: NextRequest) {
       httpOnly: true,
     })
 
-    return NextResponse.json({success: true, msg: "Login successful"}, { status: 200 })
+    const resUser = {
+      _id: user._id,
+      name: user.name,
+      userName: user.userName,
+      email: user.email,
+      imgUrl: user.imgUrl
+    }
+
+    return NextResponse.json({success: true, user: resUser, msg: "Login successful"}, { status: 200 })
   } catch (error: unknown) {
     console.error(error);
     return NextResponse.json({success: false, msg: "Internal server error"}, { status: 500 })

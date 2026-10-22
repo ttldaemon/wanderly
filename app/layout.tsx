@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/authContext";
+import { TabProvider } from "@/context/tabContext";
 
 export const metadata: Metadata = {
   title: "Wanderly",
@@ -14,7 +15,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col"><AuthProvider>{children}</AuthProvider></body>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>
+          <TabProvider>
+            {children}
+          </TabProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }

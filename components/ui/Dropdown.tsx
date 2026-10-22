@@ -31,11 +31,7 @@ export function Dropdown<T extends string>({
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className={[
-            "flex w-full items-center justify-between rounded-xl border border-sand bg-white/60 text-ink",
-            "px-3 py-2.5 mobile-m:px-4 mobile-m:py-3",
-            "text-xs mobile-m:text-sm md:text-base",
-          ].join(" ")}
+          className={"flex w-full items-center justify-between rounded-xl border border-sand bg-white/60 text-ink px-3 py-2.5 mobile-m:px-4 mobile-m:py-3 text-xs mobile-m:text-sm md:text-base"}
         >
           <span className="flex items-center gap-2">
             {icon}
@@ -58,7 +54,7 @@ export function Dropdown<T extends string>({
                   onChange(opt);
                   setOpen(false);
                 }}
-                className="block w-full px-4 py-2.5 text-left text-xs mobile-m:text-sm md:text-base text-ink hover:bg-cream-200"
+                className="block w-full px-4 py-2.5 text-left text-xs mobile-m:text-sm md:text-base text-ink hover:bg-cream-200 capitalize"
               >
                 {opt}
               </button>

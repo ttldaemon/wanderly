@@ -11,16 +11,13 @@ import { useAuth } from "@/context/authContext";
 import EmptyLocationResult from "@/components/ui/EmptyLocationResult";
 import SkeletonLocSearch from "@/components/ui/SkeletonLocSearch";
 import EmptyUserTours from "@/components/ui/EmptyUserTours";
+import { useTab } from "@/context/tabContext";
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<NavTab>("home");
-  const [postModalOpen, setPostModalOpen] = useState(false);
 
-  const { user } = useAuth();
+  const [postModalOpen, setPostModalOpen] = useState(false);
   const [recommendedUsers, setRecommendedUsers] = useState<UserSummary[]>([]);
   const [initialTours, setInitialTours] = useState<TourFeed[]>([]);
-  const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null);
-
   const [locationResults, setLocationResults] = useState<{
     query: string;
     tours: TourFeed[];
@@ -28,11 +25,14 @@ export default function HomePage() {
   const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
   const [placeSearchQuery, setPlaceSearchQuery] = useState("");
   const [userTours, setUserTours] = useState<TourFeed[]>([]);
-
-  const router = useRouter();
   const [loadingInitials, setLoadingInitials] = useState(true);
   const [loadingUserTours, setLoadingUserTours] = useState(false);
 
+  const { user } = useAuth();
+  const {activeTab, setActiveTab, selectedUser, setSelectedUser} = useTab()
+
+  const router = useRouter();
+  
   const fetchInitialData = useCallback(async () => {
     try {
       const res = await fetch("/api/initials");
@@ -68,6 +68,7 @@ export default function HomePage() {
       }
   
       const data = await res.json();
+      console.log(data)
       setUserTours(data.tours ?? []);
     } catch (error) {
       console.error("Failed to fetch user tours:", error);
@@ -193,10 +194,11 @@ export default function HomePage() {
             </div>
           ) : (
             <section>
+              {/*issue is coming in retaining the selected user*/}
               {userTours.length > 0 ? (
                 <div className="flex flex-col gap-6 p-5">
                   {userTours.map((tour) => (
-                    <PlaceCard key={tour._id} tour={tour} />
+                    <PlaceCard key={tour._id} tour={tour} onTourChanged={() => fetchUserTours(user!._id)} />
                   ))}
                 </div>
               ) : (

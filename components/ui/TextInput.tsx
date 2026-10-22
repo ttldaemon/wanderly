@@ -48,9 +48,7 @@ export function TextInput({ label, icon, className = "", ...rest }: TextInputPro
 }
 
 
-//TextArea — multi-line (caption)
-
-
+//TextArea
 interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
 }

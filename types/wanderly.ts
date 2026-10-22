@@ -23,6 +23,7 @@ export interface TourFeed {
   caption: string;
   location: string;
   tags: string[];
+  visibility: "private" | "public";
   createdAt: string;
   author: UserSummary;
 }

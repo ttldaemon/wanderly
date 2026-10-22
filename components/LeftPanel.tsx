@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Compass, Feather, Home, LogOut, User } from "lucide-react";
+import { Feather, Home, LogOut, User } from "lucide-react";
 import Button from "./ui/Button";
 import { NavTab, UserSummary } from "@/types/wanderly";
 
 import UserAvatar from "./ui/UserAvatar";
 import { useAuth } from "@/context/authContext";
 import NavBtn from "./ui/NavBtn";
+import Logo from "./ui/Logo";
 
 interface LeftPanelProps {
   activeTab: NavTab;
@@ -54,14 +55,8 @@ export default function LeftPanel({
           <button
             type="button"
             onClick={() => onSelectTab("home")}
-            className="flex items-center gap-3 rounded-full px-3 py-2 text-left transition hover:bg-cream-200"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest text-white shadow-sm">
-              <Compass size={22} />
-            </div>
-            <span className="hidden text-xl font-bold tracking-tight text-ink xl:inline">
-              Wanderly
-            </span>
+            <Logo />
           </button>
 
           <nav className="flex flex-col gap-2">

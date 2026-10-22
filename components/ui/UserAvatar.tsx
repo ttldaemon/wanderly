@@ -11,7 +11,7 @@ export default function UserAvatar({ user, isLeftPanel = false }: UserProps) {
   const router = useRouter()
   
   return (
-    <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push(`/profile/${user.userName}`)}>
+    <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push(`/profile/${user._id}`)}>
       {user.imgUrl ? (
         <img
           src={user.imgUrl}

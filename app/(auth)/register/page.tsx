@@ -155,6 +155,7 @@ export default function RegisterPage() {
             onChange={(url) =>
               setForm((prev) => ({ ...prev, imgUrl: url }))
             }
+            onUploadingChange={setUploadingImage}
             disabled={loading}
           />
 

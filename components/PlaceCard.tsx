@@ -1,13 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Image as ImageIcon, MapPin, Tag } from "lucide-react";
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon,
+  MapPin,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { TourFeed } from "@/types/wanderly";
 import Image from "next/image";
 import UserAvatar from "./ui/UserAvatar";
+import { useAuth } from "@/context/authContext";
+import EditPostModal from "./EditPostModal";
 
 interface PlaceCardProps {
   tour: TourFeed;
+  onTourChanged?: () => void | Promise<void>; // only be triggered when delete or edit is successful
 }
 
 function formatDate(dateString: string) {
@@ -24,9 +35,11 @@ function formatDate(dateString: string) {
   }
 }
 
-export default function PlaceCard({ tour }: PlaceCardProps) {
+export default function PlaceCard({ tour, onTourChanged }: PlaceCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = tour.imgUrls && tour.imgUrls.length > 0 ? tour.imgUrls : [];
+  
+  const { user } = useAuth();
 
   function nextImage(e: React.MouseEvent) {
     e.stopPropagation();
@@ -38,22 +51,90 @@ export default function PlaceCard({ tour }: PlaceCardProps) {
   function prevImage(e: React.MouseEvent) {
     e.stopPropagation();
     if (images.length > 1) {
-      setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+      setCurrentImageIndex(
+        (prev) => (prev - 1 + images.length) % images.length,
+      );
     }
   }
 
+  async function handleDelete() {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this tour? This action cannot be undone.",
+    );
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
+      // passing tourId as search params 
+      const res = await fetch(`/api/tours/${user?._id}?tourId=${tour._id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.msg || "Failed to delete tour.");
+      }
+
+      await onTourChanged?.()
+      
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error ? error.message : "Failed to delete tour.",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  const isOwner = user?._id === tour.userId;
+
   return (
     <article
-      aria-label={`Tour in ${tour.location}`}
       className="flex flex-col overflow-hidden rounded-2xl border border-sand bg-white/85 shadow-xs transition hover:border-sand-dark hover:bg-white"
     >
       {/* Card Header: Location & Timestamp */}
-      <div className="flex items-center justify-between border-b border-sand/60 px-5 py-3.5 bg-cream/30">
-      <UserAvatar user={tour.author} />
+      <div className="flex items-center justify-between border-b border-sand/60 bg-cream/30 px-5 py-3.5">
+        <UserAvatar user={tour.author} />
 
-        <div className="flex items-center gap-1.5 text-xs text-ink-soft">
-          <Calendar size={13} />
-          <time dateTime={tour.createdAt}>{formatDate(tour.createdAt)}</time>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-xs text-ink-soft">
+            <Calendar size={13} />
+            <time dateTime={tour.createdAt}>{formatDate(tour.createdAt)}</time>
+          </div>
+
+          {isOwner && (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                aria-label="Edit tour"
+                title="Edit tour"
+                onClick={() => setIsEditOpen(true)}
+                disabled={deleting}
+                className="rounded-lg p-2 text-ink-muted transition hover:bg-forest/10 hover:text-forest disabled:opacity-50"
+              >
+                <Pencil size={16} />
+              </button>
+
+              <button
+                type="button"
+                aria-label="Delete tour"
+                title="Delete tour"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="rounded-lg p-2 text-ink-muted transition hover:bg-clay-light hover:text-clay disabled:opacity-50"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -135,6 +216,23 @@ export default function PlaceCard({ tour }: PlaceCardProps) {
               );
             })}
           </div>
+        )}
+        {deleteError && (
+          <p role="alert" className="px-5 pb-3 text-sm text-clay">
+            {deleteError}
+          </p>
+        )}
+
+        {isOwner && (
+          <EditPostModal
+            tourId={tour._id}
+            isOpen={isEditOpen}
+            onClose={() => setIsEditOpen(false)}
+            tour={tour}
+            onUpdated={async () => {
+              await onTourChanged?.()
+            }}
+          />
         )}
       </div>
     </article>

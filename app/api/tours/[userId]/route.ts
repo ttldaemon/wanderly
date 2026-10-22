@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/mini";
 
 interface Params {
-  userId: string;
+  params: Promise<{userId: string}>
 }
 
 interface GetMatchCondition {
@@ -24,7 +24,7 @@ const postTourSchema = z.object({
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<Params> },
+  { params }: Params,
 ) {
   try {
     let decoded;
@@ -96,8 +96,7 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-        msg: "Internal server error",
-        error: message,
+        msg: message,
       },
       { status: 500 },
     );
@@ -106,7 +105,7 @@ export async function POST(
 
 export async function GET(
   _: NextRequest,
-  { params }: { params: Promise<Params> },
+  { params }: Params,
 ) {
   try {
     let decoded;
@@ -147,6 +146,7 @@ export async function GET(
           caption: 1,
           location: 1,
           tags: 1,
+          visibility: 1,
           createdAt: 1,
         },
       },
@@ -167,6 +167,7 @@ export async function GET(
           caption: 1,
           location: 1,
           tags: 1,
+          visibility: 1,
           createdAt: 1,
           author: {
             _id: "$author._id",
@@ -195,6 +196,110 @@ export async function GET(
         msg: "Something went wrong",
         error: message,
       },
+      { status: 500 },
+    );
+  }
+}
+
+
+export async function DELETE(
+  req: NextRequest,
+   { params }: Params,
+) {
+  try {
+    await connectDB();
+
+    const authData = await verifyToken();
+    const { userId } = await params;
+
+    if (authData._id !== userId) {
+      return NextResponse.json(
+        { success: false, msg: "Forbidden" },
+        { status: 403 },
+      );
+    }
+
+    // tourId of the tour passed as parameters of the url 
+    const tourId = req.nextUrl.searchParams.get("tourId");
+
+    if (!tourId || !Types.ObjectId.isValid(tourId)) {
+      return NextResponse.json(
+        { success: false, msg: "Invalid tour ID" },
+        { status: 400 },
+      );
+    }
+
+    const deletedTour = await Tour.findOneAndDelete({
+      _id: tourId,
+      userId,
+    });
+
+    if (!deletedTour) {
+      return NextResponse.json(
+        { success: false, msg: "Tour not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, message: "Tour deleted successfully" },
+      { status: 200 },
+    );
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Something went wrong";
+
+    return NextResponse.json(
+      { success: false, msg: message},
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: Params,
+) {
+  try {
+    await connectDB();
+
+    const authData = await verifyToken();
+    const { userId } = await params;
+
+    if (authData._id !== userId) {
+      return NextResponse.json(
+        { success: false, message: "Forbidden" },
+        { status: 403 },
+      );
+    }
+
+    const { tourId, ...body } = await req.json();
+
+    console.log(body)
+
+    const updatedTour = await Tour.findByIdAndUpdate(
+      tourId,
+      { $set: body },
+      { returnDocument: "after" },
+    ).lean();
+
+    if (!updatedTour) {
+      return NextResponse.json(
+        { success: false, message: "Tour not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, tour: updatedTour },
+      { status: 200 },
+    );
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Something went wrong";
+
+    return NextResponse.json(
+      { success: false, message },
       { status: 500 },
     );
   }

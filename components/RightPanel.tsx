@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { Compass, MapPin, RotateCcw, Search, Users, X } from "lucide-react";
+import { MapPin, RotateCcw, Search, Users, X } from "lucide-react";
 import { SearchMode, TourFeed, UserSummary } from "@/types/wanderly";
 import { buildSearchEndpoint } from "@/utils/search";
 import UserAvatar from "./ui/UserAvatar";

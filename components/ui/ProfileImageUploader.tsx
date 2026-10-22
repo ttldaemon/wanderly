@@ -8,24 +8,17 @@ import {
   CloudinaryUploadResponse,
 } from "@/components/Createpostmodal";
 
-interface CloudinarySignatureResponse {
-  signature: string;
-  timestamp: number | string;
-  cloudName: string;
-  apiKey: string;
-  folder?: string;
-  error?: string;
-}
-
 interface ProfileImageUploaderProps {
   value: string;
   onChange: (url: string) => void;
+  onUploadingChange?: (state: boolean) => void;
   disabled?: boolean;
 }
 
 export default function ProfileImageUploader({
   value,
   onChange,
+  onUploadingChange,
   disabled = false,
 }: ProfileImageUploaderProps) {
   const [previewUrl, setPreviewUrl] = useState("");
@@ -64,6 +57,7 @@ export default function ProfileImageUploader({
 
     setPreviewUrl(URL.createObjectURL(file));
     setUploading(true);
+    onUploadingChange?.(true)
 
     try {
       const signRes = await fetch("/api/cloudinary");
@@ -117,6 +111,7 @@ export default function ProfileImageUploader({
       );
     } finally {
       setUploading(false);
+      onUploadingChange?.(false)
     }
   };
 

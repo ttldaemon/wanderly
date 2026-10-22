@@ -8,18 +8,12 @@ import { Dropdown } from "./ui/Dropdown";
 import { TagInput } from "./ui/TagInput";
 import { ImageUploader } from "./ui/ImageUploader";
 
-const SIGNATURE_ENDPOINT = "/api/cloudinary";
-const CREATE_POST_ENDPOINT = (userId: string) => `/api/tours/${userId}`;
-
 const MAX_IMAGES = 6;
 const MAX_TAGS = 8;
 
-type Audience = "Everyone" | "Friends only";
-const AUDIENCE_OPTIONS: Audience[] = ["Everyone", "Friends only"];
+type Visibility = "public" | "private";
+const VISIBILITY_OPTIONS: Visibility[] = ["public", "private"]
 
-function toVisibility(audience: Audience): "public" | "private" {
-  return audience === "Everyone" ? "public" : "private";
-}
 
 interface PendingImage {
   id: string;
@@ -55,24 +49,6 @@ export interface CreatePostModalProps {
   userId: string;
 }
 
-//lucide icons
-
-function LocationIcon() {
-  return <MapPin size={16} strokeWidth={1.6} className="text-ink-soft" />;
-}
-
-function AudienceIcon() {
-  return <Users size={16} strokeWidth={1.6} className="text-ink-soft" />;
-}
-
-function SendIcon() {
-  return <Send size={16} strokeWidth={1.6} />;
-}
-
-function CloseIcon() {
-  return <X size={20} strokeWidth={1.8} />;
-}
-
 //modal
 
 export default function CreatePostModal({
@@ -84,7 +60,7 @@ export default function CreatePostModal({
   const [images, setImages] = useState<PendingImage[]>([]);
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
-  const [audience, setAudience] = useState<Audience>("Everyone");
+  const [visibility, setVisibility] = useState<Visibility>("public");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [tags, setTags] = useState<string[]>([]);
@@ -113,7 +89,7 @@ async function uploadImage(image: PendingImage) {
     );
 
     try {
-      const signRes = await fetch(`${SIGNATURE_ENDPOINT}?resourceType=image`);
+      const signRes = await fetch("/api/cloudinary");
       const signJson: CloudinarySignaturePayload = await signRes.json();
 
       if (!signRes.ok || !signJson.success) {
@@ -172,7 +148,7 @@ async function uploadImage(image: PendingImage) {
 
     setSubmitting(true);
     try {
-      const res = await fetch(CREATE_POST_ENDPOINT(userId), {
+      const res = await fetch(`/api/tours/${userId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -180,7 +156,7 @@ async function uploadImage(image: PendingImage) {
           caption,
           location,
           tags,
-          visibility: toVisibility(audience),
+          visibility,
         }),
       });
 
@@ -194,7 +170,7 @@ async function uploadImage(image: PendingImage) {
       setCaption("");
       setLocation("");
       setTags([]);
-      setAudience("Everyone");
+      setVisibility("public");
       onPosted?.(data);
       onClose();
     } catch (err) {
@@ -219,7 +195,7 @@ async function uploadImage(image: PendingImage) {
             Create a Post
           </h2>
           <IconButton variant="default" aria-label="Close" onClick={onClose}>
-            <CloseIcon />
+            <X size={20} strokeWidth={1.8} />
           </IconButton>
         </div>
 
@@ -246,17 +222,17 @@ async function uploadImage(image: PendingImage) {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Add location"
-            icon={<LocationIcon />}
+            icon={<MapPin size={16} strokeWidth={1.6} className="text-ink-soft" />}
           />
 
           <TagInput label="Tags" tags={tags} onChange={setTags} maxTags={MAX_TAGS} />
 
           <Dropdown
-            label="Audience"
-            value={audience}
-            options={AUDIENCE_OPTIONS}
-            onChange={setAudience}
-            icon={<AudienceIcon />}
+            label="Visibility"
+            value={visibility}
+            options={VISIBILITY_OPTIONS}
+            onChange={setVisibility}
+            icon={<Users size={16} strokeWidth={1.6} className="text-ink-soft" />}
           />
 
           {error && (
@@ -278,7 +254,7 @@ async function uploadImage(image: PendingImage) {
             loading={submitting}
             disabled={!caption && images.length === 0}
             onClick={handlePost}
-            icon={<SendIcon />}
+            icon={<Send size={16} strokeWidth={1.6} />}
           >
             Post
           </Button>

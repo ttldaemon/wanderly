@@ -1,5 +1,6 @@
 import { NavTab, UserSummary } from "@/types/wanderly";
-import { Compass, Plus } from "lucide-react";
+import { Feather, MountainSnow, Plus } from "lucide-react";
+import Button from "./Button";
 
 interface EmptyUserToursProps {
   selectedUser: UserSummary | null;
@@ -14,7 +15,7 @@ export default function EmptyUserTours({
 }: EmptyUserToursProps) {
   return (
     <div className="flex flex-col items-center gap-3 pt-24">
-      <Compass size={28} className="text-forest" />
+      <MountainSnow size={28} className="text-forest" />
       <h2 className="text-lg font-bold text-ink">No tours available</h2>
       <p className="text-sm text-ink-soft">
         {selectedUser
@@ -25,14 +26,14 @@ export default function EmptyUserTours({
       </p>
 
       {!selectedUser && activeTab === "your-posts" && (
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Feather size={18} className="mr-1 inline" />}
           onClick={() => setPostModalOpen(true)}
-          className="mt-3 rounded-full bg-forest px-5 py-2.5 text-sm font-semibold text-white"
         >
-          <Plus size={16} className="mr-2 inline" />
           Create a Post
-        </button>
+        </Button>
       )}
     </div>
   );

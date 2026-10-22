@@ -20,7 +20,6 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    agreeToTerms: false,
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +33,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    const { name, username, email, password, confirmPassword, agreeToTerms } = form;
+    const { name, username, email, password, confirmPassword } = form;
 
     if (!name.trim() || !username.trim() || !password || !confirmPassword) {
       return setError("All fields are required");
@@ -46,10 +45,6 @@ export default function RegisterPage() {
 
     if (password !== confirmPassword) {
       return setError("Passwords do not match");
-    }
-
-    if (!agreeToTerms) {
-      return setError("Please accept the Terms & Conditions and Privacy Policy");
     }
 
     try {
@@ -173,27 +168,6 @@ export default function RegisterPage() {
             >
               {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
-          </div>
-
-          {/* Terms & Conditions Checkbox */}
-          <div className="flex items-start gap-2.5 pt-1">
-            <input
-              type="checkbox"
-              id="terms"
-              checked={form.agreeToTerms}
-              onChange={(e) => setForm({ ...form, agreeToTerms: e.target.checked })}
-              className="mt-0.5 h-4 w-4 rounded border-sand text-forest focus:ring-forest accent-forest cursor-pointer"
-            />
-            <label htmlFor="terms" className="text-xs text-ink-muted leading-relaxed cursor-pointer select-none">
-              I agree to the{" "}
-              <span className="font-semibold text-ink underline underline-offset-2">
-                Terms &amp; Conditions
-              </span>{" "}
-              and{" "}
-              <span className="font-semibold text-ink underline underline-offset-2">
-                Privacy Policy
-              </span>
-            </label>
           </div>
 
           {/* Error Message */}

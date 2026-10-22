@@ -2,9 +2,8 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Compass, MapPin, RotateCcw, Search, Users, X } from "lucide-react";
-import { SearchMode, TourPost, UserSummary } from "@/types/wanderly";
+import { SearchMode, TourFeed, UserSummary } from "@/types/wanderly";
 import { buildSearchEndpoint } from "@/utils/search";
-import {getUserInitials} from "@/utils/utilityFn"
 import UserAvatar from "./ui/UserAvatar";
 
 export { buildSearchEndpoint };
@@ -16,7 +15,7 @@ interface RightPanelProps {
   onRetryInitials?: () => void;
   selectedUserId?: string | null;
   onSelectUser: (user: UserSummary) => void;
-  onLocationResults?: (tours: TourPost[], locationQuery: string) => void;
+  onLocationResults?: (tours: TourFeed[], locationQuery: string) => void;
   onClearLocationSearch?: () => void;
   onLocationSearching?: (isSearching: boolean, locationQuery: string) => void;
 }
@@ -40,7 +39,7 @@ export default function RightPanel({
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  // Reference to abort controller for in-flight requests
+  // Reference to abort controller
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -68,14 +67,13 @@ export default function RightPanel({
       return;
     }
 
-    // Indicate searching state immediately while debouncing
     setSearching(true);
     setSearchError(null);
     if (mode === "places") {
       onLocationSearching?.(true, trimmed);
     }
 
-    // 1.5-second (1500ms) debounce delay
+    // 1500ms debounce delay
     const timer = setTimeout(async () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -148,7 +146,7 @@ export default function RightPanel({
       // Switching to places: reset searched users so recommended box shows recommended users
       setSearchedUsers(null);
     } else {
-      // Switching to users: clear center location results
+      // Switching to users
       onClearLocationSearch?.();
       onLocationSearching?.(false, "");
     }
@@ -236,18 +234,6 @@ export default function RightPanel({
             <span>Places</span>
           </button>
         </div>
-
-        {/* Hint banner when searching places */}
-        {mode === "places" && query.trim() && (
-          <div className="flex items-center gap-2 rounded-xl bg-forest/5 border border-forest/15 px-3 py-2 text-xs text-forest">
-            <Compass size={14} className="shrink-0 animate-spin-slow" />
-            <span className="truncate">
-              {searching
-                ? `Searching places for "${query.trim()}"...`
-                : `Place results are displayed in the center feed`}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Recommended / Searched Users Box */}
@@ -325,7 +311,6 @@ export default function RightPanel({
                 <li key={user._id}>
                   <button
                     type="button"
-                    onClick={() => onSelectUser(user)}
                     className={[
                       "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition",
                       isSelected
@@ -334,8 +319,7 @@ export default function RightPanel({
                     ].join(" ")}
                   >
                     <UserAvatar user={user} />
-
-                    <span className="rounded-full border border-sand-dark bg-white/80 px-3 py-1 text-xs font-medium text-ink transition group-hover:border-forest">
+                    <span className="rounded-full border border-sand-dark bg-white/80 px-3 py-1 text-xs font-medium text-ink transition cursor-pointer"  onClick={() => onSelectUser(user)}>
                       View
                     </span>
                   </button>

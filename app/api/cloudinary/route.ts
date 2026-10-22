@@ -14,14 +14,12 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  let authData;
+  let authData = null;
   try {
     authData = await verifyToken();
-  } catch {
-    return NextResponse.json(
-      { success: false, message: "Not authorized" },
-      { status: 401 },
-    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "User is not logged in"
+    console.log(message)
   }
 
   const resourceType =
@@ -33,8 +31,10 @@ export async function GET(req: NextRequest) {
     api_secret: API_SECRET,
   });
 
+  const folder = authData === null ? "wanderly/profiles" : `wanderly/${authData.userName}` // if the user is not logged in means the image upload while registering is asking for the url then the folder will be profiles, after the user logs in then the image will be uploaded to the usernames folder, be it update profile image or tour image upload  
+
   const paramsToSign = {
-    folder: `wanderly/${authData.userName}`,
+    folder,
     timestamp: Math.floor(Date.now() / 1000),
     type: "upload",
   };
@@ -46,6 +46,14 @@ export async function GET(req: NextRequest) {
 
   const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`; // resource type is useful when you have to upload different types like som
 
+  console.log(uploadUrl,
+  signature,
+  API_KEY,
+  CLOUD_NAME,
+  paramsToSign.timestamp,
+  paramsToSign.folder,
+  resourceType,)
+  
   return NextResponse.json({
     success: true,
     data: {

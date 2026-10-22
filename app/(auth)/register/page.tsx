@@ -1,37 +1,46 @@
+
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Caveat } from "next/font/google";
-import { User, Lock, Eye, EyeOff, Mountain } from "lucide-react";
+
+import {
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  Mail,
+  CircleUser,
+  LockKeyhole,
+} from "lucide-react";
+
 import { TextInput } from "@/components/ui/TextInput";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/context/authContext";
-
-const caveat = Caveat({
-  subsets: ["latin"],
-  weight: ["700"],
-});
+import ProfileImageUploader from "@/components/ui/ProfileImageUploader";
+import Logo from "@/components/ui/Logo";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
     name: "",
     username: "",
     email: "",
+    imgUrl: "",
     password: "",
     confirmPassword: "",
-    agreeToTerms: false,
   });
 
   const { isAuthenticated, isLoadingAuth } = useAuth();
+  const router = useRouter();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const router = useRouter();
 
   useEffect(() => {
     if (!isLoadingAuth && isAuthenticated) {
@@ -39,29 +48,44 @@ export default function RegisterPage() {
     }
   }, [isAuthenticated, isLoadingAuth, router]);
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
+  useEffect(() => {
+    return () => {
+      if (previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
-    const { name, username, email, password, confirmPassword, agreeToTerms } =
+    const { name, username, email, password, confirmPassword, imgUrl } =
       form;
 
-    if (!name.trim() || !username.trim() || !password || !confirmPassword) {
-      return setError("All fields are required");
+    if (uploadingImage) {
+      setError("Please wait for the profile picture upload to finish.");
+      return;
+    }
+
+    if (
+      !name.trim() ||
+      !username.trim() ||
+      !password ||
+      !confirmPassword
+    ) {
+      setError("Please fill in all required fields.");
+      return;
     }
 
     if (password.length < 6) {
-      return setError("Password must be at least 6 characters");
+      setError("Password must be at least 6 characters.");
+      return;
     }
 
     if (password !== confirmPassword) {
-      return setError("Passwords do not match");
-    }
-
-    if (!agreeToTerms) {
-      return setError(
-        "Please accept the Terms & Conditions and Privacy Policy",
-      );
+      setError("Passwords do not match.");
+      return;
     }
 
     try {
@@ -69,198 +93,203 @@ export default function RegisterPage() {
 
       const res = await fetch("/api/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           name: name.trim(),
           userName: username.trim(),
-          email:
-            email.trim() || `${username.trim().toLowerCase()}@wanderly.com`,
-          password,
+          email: email.trim(),
+          password: password.trim(),
+          imgUrl,
         }),
       });
 
       const data = await res.json();
-      setLoading(false);
 
       if (!res.ok || !data.success) {
-        return setError(
-          data.msg || data.error || "Registration failed. Please try again.",
+        setError(
+          data.msg ||
+            data.error ||
+            "Registration failed. Please try again.",
         );
+        return;
       }
 
       router.push("/login");
     } catch (err) {
       console.error("Registration error:", err);
-      setLoading(false);
       setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <main
-      className="relative min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat p-4 sm:p-6 selection:bg-forest selection:text-white"
+      className="relative flex min-h-screen w-full items-center justify-center bg-cover bg-center bg-no-repeat p-4 selection:bg-forest selection:text-white sm:p-6"
       style={{ backgroundImage: "url('/wanderly-bg.jpg')" }}
     >
-      {/* Subtle overlay for depth & readability */}
-      <div className="absolute inset-0 bg-black/15 backdrop-blur-[2px] pointer-events-none" />
+      {/* Background overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-black/15 backdrop-blur-[2px]" />
 
-      {/* Main Register Card */}
-      <div className="relative z-10 w-full max-w-[420px] rounded-[36px] bg-cream/95 backdrop-blur-md shadow-2xl border border-sand p-7 sm:p-9 flex flex-col items-center">
-        {/* Brand Header */}
-        <div className="flex items-center justify-center gap-2 mb-1.5">
-          <span
-            className={`${caveat.className} text-4xl sm:text-5xl text-forest font-bold tracking-wide drop-shadow-sm`}
-          >
-            Wanderly
-          </span>
-          <Mountain
-            className="w-8 h-8 sm:w-9 sm:h-9 text-forest"
-            strokeWidth={1.75}
-          />
-        </div>
+      {/* Registration card */}
+      <div className="relative z-10 flex w-full max-w-[420px] flex-col items-center rounded-[36px] border border-sand bg-cream/95 p-7 shadow-2xl backdrop-blur-md sm:p-9">
+        {/* Brand */}
+        <Logo />
 
-        {/* Title & Subtitle */}
-        <h1 className="text-xl sm:text-2xl font-bold text-ink tracking-tight text-center">
+        {/* Heading */}
+        <h1 className="text-center text-xl font-bold tracking-tight text-ink sm:text-2xl">
           Create your account
         </h1>
-        <p className="text-xs sm:text-sm text-ink-soft text-center mt-1 mb-4 max-w-[270px]">
-          Join Wanderly and start sharing your adventures.
+
+        <p className="mb-4 mt-1 max-w-[270px] text-center text-xs text-ink-soft sm:text-sm">
+          Join Wanderly and start sharing your Tours.
         </p>
 
-        {/* Registration Form */}
         <form onSubmit={handleSubmit} className="w-full space-y-3">
-          {/* Name Field using TextInput */}
+         
+          {/* Profile Picture Uploader */} 
+          <ProfileImageUploader
+            value={form.imgUrl}
+            onChange={(url) =>
+              setForm((prev) => ({ ...prev, imgUrl: url }))
+            }
+            disabled={loading}
+          />
+
+          {/* Name */}
           <TextInput
-            icon={<User className="w-5 h-5 text-ink-faint shrink-0" />}
+            icon={<User className="h-5 w-5 shrink-0 text-ink-faint" />}
             type="text"
             name="name"
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, name: e.target.value }))
+            }
             placeholder="Name"
             required
           />
 
-          {/* Username Field using TextInput */}
+          {/* Username */}
           <TextInput
-            icon={<User className="w-5 h-5 text-ink-faint shrink-0" />}
+            icon={<CircleUser className="h-5 w-5 shrink-0 text-ink-faint" />}
             type="text"
             name="username"
             value={form.username}
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, username: e.target.value }))
+            }
             placeholder="Username"
             required
           />
 
-          {/* Password Field using TextInput with toggle button */}
+          {/* Email */}
+          <TextInput
+            icon={<Mail className="h-5 w-5 shrink-0 text-ink-faint" />}
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, email: e.target.value }))
+            }
+            placeholder="Email"
+          />
+
+          {/* Password */}
           <div className="relative">
             <TextInput
-              icon={<Lock className="w-5 h-5 text-ink-faint shrink-0" />}
+              icon={<Lock className="h-5 w-5 shrink-0 text-ink-faint" />}
               type={showPassword ? "text" : "password"}
               name="password"
               value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, password: e.target.value }))
+              }
               placeholder="Password"
               className="pr-8"
               required
             />
+
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink transition-colors cursor-pointer"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 cursor-pointer text-ink-faint transition-colors hover:text-ink"
             >
               {showPassword ? (
-                <EyeOff className="w-4 h-4" />
+                <EyeOff className="h-4 w-4" />
               ) : (
-                <Eye className="w-4 h-4" />
+                <Eye className="h-4 w-4" />
               )}
             </button>
           </div>
 
-          {/* Confirm Password Field using TextInput with toggle button */}
+          {/* Confirm Password */}
           <div className="relative">
             <TextInput
-              icon={<Lock className="w-5 h-5 text-ink-faint shrink-0" />}
+              icon={<LockKeyhole className="h-5 w-5 shrink-0 text-ink-faint" />}
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
               value={form.confirmPassword}
               onChange={(e) =>
-                setForm({ ...form, confirmPassword: e.target.value })
+                setForm((prev) => ({
+                  ...prev,
+                  confirmPassword: e.target.value,
+                }))
               }
               placeholder="Confirm Password"
               className="pr-8"
               required
             />
+
             <button
               type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              aria-label={
-                showConfirmPassword
-                  ? "Hide confirm password"
-                  : "Show confirm password"
-              }
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink transition-colors cursor-pointer"
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 cursor-pointer text-ink-faint transition-colors hover:text-ink"
             >
               {showConfirmPassword ? (
-                <EyeOff className="w-4 h-4" />
+                <EyeOff className="h-4 w-4" />
               ) : (
-                <Eye className="w-4 h-4" />
+                <Eye className="h-4 w-4" />
               )}
             </button>
           </div>
 
-          {/* Terms & Conditions Checkbox */}
-          <div className="flex items-start gap-2.5 pt-1">
-            <input
-              type="checkbox"
-              id="terms"
-              checked={form.agreeToTerms}
-              onChange={(e) =>
-                setForm({ ...form, agreeToTerms: e.target.checked })
-              }
-              className="mt-0.5 h-4 w-4 rounded border-sand text-forest focus:ring-forest accent-forest cursor-pointer"
-            />
-            <label
-              htmlFor="terms"
-              className="text-xs text-ink-muted leading-relaxed cursor-pointer select-none"
-            >
-              I agree to the{" "}
-              <span className="font-semibold text-ink underline underline-offset-2">
-                Terms &amp; Conditions
-              </span>{" "}
-              and{" "}
-              <span className="font-semibold text-ink underline underline-offset-2">
-                Privacy Policy
-              </span>
-            </label>
-          </div>
-
-          {/* Error Message */}
+          {/* Registration Error */}
           {error && (
-            <div className="rounded-xl bg-clay-light border border-sand p-2.5 text-center text-xs font-medium text-clay">
+            <div
+              role="alert"
+              className="rounded-xl border border-sand bg-clay-light p-2.5 text-center text-xs font-medium text-clay"
+            >
               {error}
             </div>
           )}
 
-          {/* Sign Up Button using Button UI component */}
+          {/* Submit */}
           <div className="pt-2">
             <Button
               type="submit"
               variant="primary"
               size="md"
               fullWidth
-              loading={loading}
+              loading={loading || uploadingImage}
+              disabled={loading || uploadingImage}
             >
-              {loading ? "Creating account..." : "Sign Up"}
+              {uploadingImage
+                ? "Uploading picture..."
+                : loading
+                  ? "Creating account..."
+                  : "Sign Up"}
             </Button>
           </div>
 
           {/* Login Link */}
-          <p className="pt-2 text-center text-xs sm:text-sm text-ink-muted">
+          <p className="pt-2 text-center text-xs text-ink-muted sm:text-sm">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-semibold text-forest hover:underline underline-offset-2 transition-colors"
+              className="font-semibold text-forest underline-offset-2 transition-colors hover:underline"
             >
               Login
             </Link>

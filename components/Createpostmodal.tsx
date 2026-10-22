@@ -29,7 +29,7 @@ interface PendingImage {
   uploading: boolean;
 }
 
-interface CloudinarySignaturePayload {
+export interface CloudinarySignaturePayload {
   success: boolean;
   message?: string;
   data: {
@@ -43,7 +43,7 @@ interface CloudinarySignaturePayload {
   };
 }
 
-interface CloudinaryUploadResponse {
+export interface CloudinaryUploadResponse {
   secure_url: string;
   [key: string]: unknown;
 }
@@ -52,7 +52,6 @@ export interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPosted?: (data: unknown) => void;
-  /** The logged-in user's id — required for POST /api/tours/:userId */
   userId: string;
 }
 
@@ -108,7 +107,7 @@ export default function CreatePostModal({
     next.forEach(uploadImage);
   }
 
-  async function uploadImage(image: PendingImage) {
+async function uploadImage(image: PendingImage) {
     setImages((prev) =>
       prev.map((img) => (img.id === image.id ? { ...img, uploading: true } : img))
     );

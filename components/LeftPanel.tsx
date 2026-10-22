@@ -8,6 +8,7 @@ import { NavTab, UserSummary } from "@/types/wanderly";
 
 import UserAvatar from "./ui/UserAvatar";
 import { useAuth } from "@/context/authContext";
+import NavBtn from "./ui/NavBtn";
 
 interface LeftPanelProps {
   activeTab: NavTab;
@@ -65,24 +66,13 @@ export default function LeftPanel({
 
           <nav className="flex flex-col gap-2">
             {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-
               return (
-                <button
+                <NavBtn
                   key={item.id}
-                  type="button"
-                  onClick={() => onSelectTab(item.id)}
-                  className={[
-                    "flex items-center gap-4 rounded-full px-4 py-3 text-base transition",
-                    isActive
-                      ? "bg-cream-200 font-semibold text-forest"
-                      : " font-medium text-ink hover:bg-cream-100",
-                  ].join(" ")}
-                >
-                  <Icon size={22} strokeWidth={isActive ? 2.4 : 1.8} />
-                  <span className="hidden xl:inline">{item.label}</span>
-                </button>
+                  item={item}
+                  onSelectTab={onSelectTab}
+                  activeTab={activeTab}
+                />
               );
             })}
 
@@ -117,7 +107,6 @@ export default function LeftPanel({
               onClick={onOpenPostModal}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-forest text-white shadow-md transition hover:bg-forest-dark xl:hidden"
             >
-              LeftPanel
               <Feather size={20} />
             </button>
           </div>
@@ -130,25 +119,20 @@ export default function LeftPanel({
         )}
       </aside>
 
+      {/*Bottom Nav when left panel becomes hidden*/}
       <nav
         aria-label="Mobile Navigation"
         className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t border-sand bg-cream/95 px-4 py-2.5 backdrop-blur-md md:hidden"
       >
         {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
           return (
-            <button
+            <NavBtn
               key={item.id}
-              type="button"
-              onClick={() => onSelectTab(item.id)}
-              className={`flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-xs ${
-                isActive ? "font-semibold text-forest" : "text-ink-muted"
-              }`}
-            >
-              <Icon size={20} />
-              <span>{item.label}</span>
-            </button>
+              item={item}
+              onSelectTab={onSelectTab}
+              activeTab={activeTab}
+              isMobile
+            />
           );
         })}
 

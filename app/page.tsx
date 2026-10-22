@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, MapPin, Plus, Compass } from "lucide-react";
 import LeftPanel from "@/components/LeftPanel";
 import RightPanel from "@/components/RightPanel";
 import PlaceCard from "@/components/PlaceCard";
 import CreatePostModal from "@/components/Createpostmodal";
-import { NavTab, TourPost, UserSummary } from "@/types/wanderly";
+import { NavTab, TourFeed, UserSummary } from "@/types/wanderly";
 import { useAuth } from "@/context/authContext";
 import EmptyLocationResult from "@/components/ui/EmptyLocationResult";
 import SkeletonLocSearch from "@/components/ui/SkeletonLocSearch";
+import EmptyUserTours from "@/components/ui/EmptyUserTours";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<NavTab>("home");
@@ -18,18 +18,20 @@ export default function HomePage() {
 
   const { user } = useAuth();
   const [recommendedUsers, setRecommendedUsers] = useState<UserSummary[]>([]);
-  const [initialTours, setInitialTours] = useState<TourPost[]>([]);
+  const [initialTours, setInitialTours] = useState<TourFeed[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null);
 
   const [locationResults, setLocationResults] = useState<{
     query: string;
-    tours: TourPost[];
+    tours: TourFeed[];
   } | null>(null);
   const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
   const [placeSearchQuery, setPlaceSearchQuery] = useState("");
+  const [userTours, setUserTours] = useState<TourFeed[]>([]);
 
   const router = useRouter();
   const [loadingInitials, setLoadingInitials] = useState(true);
+  const [loadingUserTours, setLoadingUserTours] = useState(false);
 
   const fetchInitialData = useCallback(async () => {
     try {
@@ -38,8 +40,8 @@ export default function HomePage() {
       if (res.ok) {
         const data = await res.json();
         console.log(data);
-        setRecommendedUsers(data.users?.length ? data.users : []);
-        setInitialTours(data.tours?.length ? data.tours : [])
+        setRecommendedUsers(data.users);
+        setInitialTours(data.tours);
       } else {
         router.push("/register");
         return;
@@ -54,6 +56,26 @@ export default function HomePage() {
   useEffect(() => {
     fetchInitialData();
   }, [fetchInitialData]);
+  
+  const fetchUserTours = async (userId: string) => {
+    try {
+      setLoadingUserTours(true)
+      const res = await fetch(`/api/tours/${userId}`);
+  
+      if (!res.ok) {
+        setUserTours([]);
+        return;
+      }
+  
+      const data = await res.json();
+      setUserTours(data.tours ?? []);
+    } catch (error) {
+      console.error("Failed to fetch user tours:", error);
+      setUserTours([]);
+    } finally {
+      setLoadingUserTours(false)
+    }
+  };
 
   function handleSelectTab(tab: NavTab) {
     setActiveTab(tab);
@@ -61,6 +83,11 @@ export default function HomePage() {
     setLocationResults(null);
     setIsSearchingPlaces(false);
     setPlaceSearchQuery("");
+    setUserTours([])
+
+    if (tab === "your-posts" && user?._id) {
+      fetchUserTours(user?._id);
+    }
   }
 
   function handleSelectRecommendedUser(user: UserSummary) {
@@ -68,13 +95,16 @@ export default function HomePage() {
     setLocationResults(null);
     setIsSearchingPlaces(false);
     setPlaceSearchQuery("");
+    setUserTours([])
+
+    fetchUserTours(user._id)
   }
 
   const handleClearLocationSearch = useCallback(() => {
     setLocationResults(null);
     setIsSearchingPlaces(false);
-    setPlaceSearchQuery("");
-  }, [])
+    setPlaceSearchQuery("hello");
+  }, []);
 
   const handleLocationSearching = useCallback(
     (isSearching: boolean, locationQuery: string) => {
@@ -85,12 +115,11 @@ export default function HomePage() {
   );
 
   const handleLocationResults = useCallback(
-    (tours: TourPost[], locationQuery: string) => {
+    (tours: TourFeed[], locationQuery: string) => {
       setLocationResults({ query: locationQuery, tours });
     },
     [],
   );
-
 
   const feedTitle = isSearchingPlaces
     ? `Searching places for "${placeSearchQuery}"...`
@@ -113,7 +142,7 @@ export default function HomePage() {
           currentUser={user}
         />
 
-        {/* Center Main Column: Dynamic Feed and Place Search Results */}
+        {/* Center Main Column */}
         <main className="min-h-screen w-full max-w-2xl flex-1 border-r border-sand pb-20 md:pb-0">
           <header className="sticky top-0 z-20 flex items-center justify-between border-b border-sand bg-cream/90 px-5 py-4 backdrop-blur-md">
             <div>
@@ -137,7 +166,9 @@ export default function HomePage() {
           </header>
 
           {/* Middle Portion*/}
-          {isSearchingPlaces ? <SkeletonLocSearch /> : locationResults ? (
+          {isSearchingPlaces || loadingUserTours ? (
+            <SkeletonLocSearch />
+          ) : locationResults ? (
             /* Search Results for Places */
             locationResults.tours.length > 0 ? (
               <div className="flex flex-col gap-6 p-5">
@@ -145,7 +176,12 @@ export default function HomePage() {
                   <PlaceCard key={tour._id} tour={tour} />
                 ))}
               </div>
-            ) : <EmptyLocationResult query={locationResults.query} handleClearLocationSearch={handleClearLocationSearch} />
+            ) : (
+              <EmptyLocationResult
+                query={locationResults.query}
+                handleClearLocationSearch={handleClearLocationSearch}
+              />
+            )
           ) : initialTours.length > 0 &&
             activeTab === "home" &&
             !selectedUser ? (
@@ -156,28 +192,16 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            /* Default Feed Placeholder Slot */
-            <section className="flex flex-col items-center justify-center px-6 py-24 text-center">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-cream-200 text-forest shadow-xs">
-                <Compass size={28} />
-              </div>
-              <h2 className="text-lg font-bold text-ink">Feed Stream</h2>
-              <p className="mt-1.5 max-w-sm text-sm text-ink-soft">
-                {selectedUser
-                  ? `Viewing posts by ${selectedUser.name}.`
-                  : activeTab === "your-posts"
-                    ? "Your published travel tours will appear here."
-                    : "Center post feed stream. Public tours and stories appear here."}
-              </p>
-
-              <button
-                type="button"
-                onClick={() => setPostModalOpen(true)}
-                className="mt-6 flex items-center gap-2 rounded-full bg-forest px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-forest-dark"
-              >
-                <Plus size={16} />
-                <span>Create a Post</span>
-              </button>
+            <section>
+              {userTours.length > 0 ? (
+                <div className="flex flex-col gap-6 p-5">
+                  {userTours.map((tour) => (
+                    <PlaceCard key={tour._id} tour={tour} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyUserTours selectedUser={selectedUser} activeTab={activeTab} setPostModalOpen={ setPostModalOpen }  />
+              )}
             </section>
           )}
         </main>

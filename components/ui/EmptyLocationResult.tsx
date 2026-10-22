@@ -13,7 +13,7 @@ export default function EmptyLocationResult({query, handleClearLocationSearch}: 
       </div>
       <h2 className="text-lg font-bold text-ink">No places found</h2>
       <p className="mt-1.5 max-w-sm text-sm text-ink-soft">
-        We couldn&apos;t find any public tours or places matching
+        No Tours found for Location
         &ldquo;{query}&rdquo;.
       </p>
       <button

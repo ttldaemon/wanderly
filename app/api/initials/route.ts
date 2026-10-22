@@ -100,10 +100,10 @@ export async function GET() {
       },
       { status: 200 },
     );
-  } catch (error: unknowm) {
-    console.error(error);
+  } catch (error: unknown) {
+     const message = error instanceof Error ? error.message : "Something went wrong"
     return NextResponse.json(
-      { msg: "Internal Server Error", error: error.message },
+      { msg: "Internal Server Error", error: message },
       { status: 500 },
     );
   }

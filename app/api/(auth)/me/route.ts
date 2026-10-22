@@ -20,10 +20,11 @@ export async function GET() {
 
     return NextResponse.json({success: true, user}, {status: 200})
     
-  } catch (error: unknowm) {
-    console.error(error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Something went wrong"
+    
     return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
+      { message: "Internal Server Error", error: message },
       { status: 500 },
     );
   }

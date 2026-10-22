@@ -1,13 +1,17 @@
 import { UserSummary } from "@/types/wanderly";
 import {getUserInitials} from "@/utils/utilityFn"
+import { useRouter } from "next/navigation";
 interface UserProps {
   user: UserSummary,
   isLeftPanel?: boolean
 }
 
 export default function UserAvatar({ user, isLeftPanel = false }: UserProps) {
+
+  const router = useRouter()
+  
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push(`/profile/${user.userName}`)}>
       {user.imgUrl ? (
         <img
           src={user.imgUrl}

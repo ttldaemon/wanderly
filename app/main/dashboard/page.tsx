@@ -1,6 +1,10 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import SearchBar, {
+  SearchUser,
+  SearchTour,
+} from "../../components/SearchBar";
 
 type Post = {
   id: string;
@@ -13,499 +17,627 @@ type Post = {
   likes: number;
   comments: number;
 };
+
 type ApiTour = {
   _id: string;
   imgUrls: string[];
   caption: string;
   location: string;
   createdAt: string;
-  author?: { name: string; userName: string };
+  author?: {
+    name: string;
+    userName: string;
+  };
 };
-type Person = { _id: string; name: string; userName: string };
-const navItems = ["Home", "My Trips", "Explore", "People", "Saved"];
-const destinations = [
-  [
-    "Ladakh",
-    "13.5K posts",
-    "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=160&q=80",
-  ],
-  [
-    "Goa",
-    "8.7K posts",
-    "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=160&q=80",
-  ],
-  [
-    "Spiti",
-    "11.4K memories",
-    "https://images.unsplash.com/photo-1626621331169-c578f5fbcb24?auto=format&fit=crop&w=160&q=80",
-  ],
-];
+
+type Person = {
+  _id: string;
+  name: string;
+  userName: string;
+};
+
 const styles = {
   dashboard:
-    "min-h-screen grid grid-cols-[245px_minmax(480px,1fr)_288px] bg-cream text-ink max-[1050px]:grid-cols-[205px_minmax(0,1fr)] max-[700px]:block",
-  sidebar:
-    "min-h-screen flex flex-col bg-forest-deep bg-[linear-gradient(rgba(13,59,42,.93),rgba(27,75,55,.96)),url('https://images.unsplash.com/photo-1443632864897-14973fa006cf?auto=format&fit=crop&w=1000&q=80')] bg-cover p-5 pt-8 text-cream max-[700px]:min-h-0",
-  brand:
-    "pb-9 text-[28px] font-bold italic font-display text-white no-underline",
-  navActive:
-    "w-full rounded-lg bg-cream-100 px-3 py-3 text-left text-sm font-bold text-forest-deep",
-  navItem: "w-full rounded-lg px-3 py-3 text-left text-sm hover:bg-white/10",
-  icon: "mr-2 inline-block w-5 text-center text-lg",
-  sidebarBottom: "mt-auto border-t border-white/15 pt-4 text-[11px] text-cream",
-  logout: "mt-3 rounded-lg px-3 py-3 text-left text-sm hover:bg-white/10",
-  feed: "mx-auto w-full max-w-[820px] border-r border-sand px-7 pt-5 pb-12 max-[700px]:border-0 max-[700px]:p-4",
+    "min-h-screen grid grid-cols-[minmax(0,1fr)_288px] bg-cream text-ink max-[1050px]:block",
+  main: "min-w-0 p-6",
   topbar: "mb-4 flex items-center gap-4",
-  search:
-    "flex h-10 flex-1 items-center rounded-lg border border-sand bg-white px-3",
-  iconButton: "border-0 bg-transparent text-xl",
+  iconButton:
+    "grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-sand bg-white text-ink",
   avatar:
-    "grid h-[34px] w-[34px] place-items-center rounded-full bg-linear-to-br from-amber-300 to-amber-900 text-[11px] font-bold text-white",
-  composer:
-    "flex w-full items-center gap-3 rounded-t-xl border border-b-0 border-sand bg-white px-4 py-3 text-left",
-  composerActions:
-    "flex items-center gap-5 rounded-b-xl border border-sand bg-white px-4 py-2.5 text-xs text-ink-muted [&>button]:ml-auto [&>button]:rounded-md [&>button]:bg-forest [&>button]:px-5 [&>button]:py-2 [&>button]:text-white",
+    "grid h-10 w-10 shrink-0 place-items-center rounded-full bg-forest text-sm font-semibold text-white",
   postList: "mt-5 grid gap-5",
   post: "rounded-xl border border-sand bg-white p-4",
-  postHeader:
-    "flex items-center gap-2.5 [&>button]:ml-auto [&>button]:border-0 [&>button]:bg-transparent",
-  authorAvatar:
-    "grid h-[33px] w-[33px] place-items-center rounded-full bg-forest text-xs font-bold text-white",
-  caption: "my-3 text-[13px]",
-  postImage: "h-[258px] w-full rounded-lg object-cover",
-  postFooter:
-    "flex items-center gap-5 pt-3 text-[11px] text-ink-muted [&>button]:border-0 [&>button]:bg-transparent",
-  liked: "text-red-600",
-  share: "ml-auto",
-  empty: "p-7 text-center text-ink-faint",
-  error: "p-5 text-center text-xs text-clay",
-  discover: "discover bg-cream px-6 pt-8 max-[1050px]:hidden",
-  sectionHeading:
-    "mb-4 flex items-center justify-between [&>h2]:text-[13px] [&>button]:border-0 [&>button]:bg-transparent [&>button]:text-[10px] [&>button]:font-bold [&>button]:text-forest",
-  person:
-    "my-3 flex items-center gap-2 [&>div:nth-child(2)]:flex-1 [&>button]:rounded-md [&>button]:border [&>button]:border-sand [&>button]:bg-transparent [&>button]:px-2 [&>button]:py-1 [&>button]:text-[9px] [&>button]:text-forest",
+  postHeader: "mb-3 flex items-center justify-between",
+  postAuthor: "font-semibold text-ink",
+  postHandle: "text-xs text-ink-faint",
+  postPlace: "text-xs font-medium text-forest",
+  postImage:
+    "mt-3 aspect-[16/10] w-full rounded-lg object-cover bg-sand",
+  postCaption: "mt-3 text-sm leading-6 text-ink",
+  postActions: "mt-4 flex items-center gap-5 text-xs text-ink-faint",
+  aside:
+    "border-l border-sand bg-white p-5 max-[1050px]:border-l-0 max-[1050px]:border-t",
+  asideTitle: "text-sm font-semibold text-ink",
+  personList: "mt-3 grid gap-3",
+  person: "flex items-center gap-3",
   personAvatar:
-    "grid h-[29px] w-[29px] place-items-center rounded-full bg-amber-700 text-[10px] font-bold text-white",
-  trending: "mt-9 border-t border-sand pt-7",
+    "grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sand text-xs font-semibold text-ink",
+  personName: "text-sm font-medium text-ink",
+  personHandle: "text-xs text-ink-faint",
+  destinationList: "mt-3 grid gap-2",
   destination:
-    "my-3 flex items-center gap-2.5 [&>img]:h-10 [&>img]:w-[42px] [&>img]:rounded-md [&>img]:object-cover",
-  overlay: "fixed inset-0 z-20 grid place-items-center bg-black/70 p-5",
-  modal:
-    "w-full max-w-[480px] rounded-xl bg-cream p-6 shadow-modal [&>header]:flex [&>header]:items-center [&>header]:justify-between [&>header>button]:border-0 [&>header>button]:bg-transparent",
-  fieldLabel:
-    "mt-5 grid gap-2 text-[11px] font-bold [&_textarea]:h-20 [&_textarea]:rounded-md [&_textarea]:border [&_textarea]:border-sand [&_textarea]:bg-white [&_textarea]:p-3 [&_input]:rounded-md [&_input]:border [&_input]:border-sand [&_input]:bg-white [&_input]:p-3 [&_select]:rounded-md [&_select]:border [&_select]:border-sand [&_select]:bg-white [&_select]:p-3",
-  uploadArea:
-    "relative grid min-h-[105px] place-content-center justify-items-center gap-1 rounded-lg border border-dashed border-sand-dark text-ink-soft [&>input]:absolute [&>input]:inset-0 [&>input]:cursor-pointer [&>input]:opacity-0",
-  fileNames:
-    "mt-2 flex flex-wrap gap-2 [&>span]:rounded-full [&>span]:bg-cream-100 [&>span]:px-2 [&>span]:py-1 [&>span]:text-[10px]",
-  formError: "mt-3 text-xs text-clay",
-  cancel: "rounded-md border border-sand bg-white px-4 py-2 text-xs",
-  publish:
-    "ml-auto rounded-md bg-forest px-6 py-2.5 text-xs font-semibold text-white disabled:opacity-70",
+    "rounded-lg border border-sand bg-cream px-3 py-2 text-sm text-ink",
 };
+
 function Icon({ name }: { name: string }) {
-  const icons: Record<string, string> = {
-    Home: "⌂",
-    "My Trips": "◫",
-    Explore: "◈",
-    People: "♧",
-    Saved: "♡",
-    search: "⌕",
-    bell: "♧",
-    photo: "▧",
-    pin: "⌖",
-    globe: "◎",
-    heart: "♥",
-    comment: "◌",
-    bookmark: "♢",
-    share: "↗",
-    close: "×",
-    upload: "⇧",
-  };
-  return (
-    <span aria-hidden="true" className={styles.icon}>
-      {icons[name]}
-    </span>
-  );
+  if (name === "bell") {
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+    );
+  }
+
+  return null;
 }
-function asPost(tour: ApiTour, own = false): Post {
-  const minutes = Math.max(
-    1,
-    Math.floor((Date.now() - new Date(tour.createdAt).getTime()) / 60000),
-  );
+
+function formatTime(date: string) {
+  const diff = Date.now() - new Date(date).getTime();
+
+  const minutes = Math.floor(diff / (1000 * 60));
+
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+
+  return new Date(date).toLocaleDateString();
+}
+
+function asPost(tour: ApiTour): Post {
   return {
     id: tour._id,
-    author: own ? "You" : (tour.author?.name ?? "Fellow traveller"),
-    handle: own ? "@your.journey" : `@${tour.author?.userName ?? "wanderly"}`,
+    author: tour.author?.name ?? "Traveller",
+    handle: tour.author?.userName
+      ? `@${tour.author.userName}`
+      : "@traveller",
     place: tour.location,
-    time: minutes < 60 ? `${minutes}m ago` : `${Math.floor(minutes / 60)}h ago`,
+    time: formatTime(tour.createdAt),
     caption: tour.caption,
-    image: tour.imgUrls[0] ?? "",
+    image: tour.imgUrls?.[0] ?? "",
     likes: 0,
     comments: 0,
   };
 }
+
 export default function DashboardPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
+
   const [currentUser, setCurrentUser] = useState<{
     _id: string;
     userName: string;
   } | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+
   const [isComposerOpen, setComposerOpen] = useState(false);
   const [liked, setLiked] = useState<string[]>([]);
+
   const [files, setFiles] = useState<File[]>([]);
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
-  const [visibility, setVisibility] = useState<"public" | "private">("public");
-  const [search, setSearch] = useState("");
+
+  const [visibility, setVisibility] = useState<"public" | "private">(
+    "public",
+  );
+
   const [formError, setFormError] = useState("");
   const [isSubmitting, setSubmitting] = useState(false);
+
+  // Search state
+  const [searchResults, setSearchResults] = useState<
+    SearchUser[] | SearchTour[]
+  >([]);
+
+  const [isUserSearch, setIsUserSearch] = useState(false);
+
+  // Important:
+  // [] can mean either "no search yet" OR "search returned no results".
+  // This state lets us distinguish between those two cases.
+  const [hasSearched, setHasSearched] = useState(false);
+
+  function handleSearchResults(
+    results: SearchUser[] | SearchTour[],
+    isUserData: boolean,
+  ) {
+    setSearchResults(results);
+    setIsUserSearch(isUserData);
+    setHasSearched(true);
+  }
+
   useEffect(() => {
-    async function load() {
+    async function loadDashboard() {
       try {
+        setIsLoading(true);
+        setLoadError("");
+
         const response = await fetch("/api/initials");
-        const data = await response.json();
-        if (!response.ok || !data.success)
-          throw new Error(data.msg ?? "Could not load your dashboard.");
-        setPosts((data.tours as ApiTour[]).map((tour) => asPost(tour)));
-        setPeople(data.users as Person[]);
-        setCurrentUser(data.currentUser);
+
+        const payload = await response.json();
+
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.msg || "Failed to load dashboard");
+        }
+
+        setPosts((payload.tours ?? []).map(asPost));
+        setPeople(payload.people ?? []);
+        setCurrentUser(payload.currentUser ?? null);
       } catch (error) {
         setLoadError(
           error instanceof Error
             ? error.message
-            : "Could not load your dashboard.",
+            : "Something went wrong while loading the dashboard.",
         );
       } finally {
         setIsLoading(false);
       }
     }
-    void load();
+
+    loadDashboard();
   }, []);
-  function onFilesSelected(event: ChangeEvent<HTMLInputElement>) {
-    setFiles(Array.from(event.target.files ?? []).slice(0, 4));
+
+  function toggleLike(id: string) {
+    setLiked((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
   }
-  async function publish(event: FormEvent<HTMLFormElement>) {
+
+  function handleFiles(event: ChangeEvent<HTMLInputElement>) {
+    if (!event.target.files) return;
+
+    setFiles(Array.from(event.target.files));
+  }
+
+  async function publishPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!currentUser)
-      return setFormError("Your session has expired. Please sign in again.");
-    if (!files.length)
-      return setFormError("Add at least one photo to publish a memory.");
-    setSubmitting(true);
+
+    if (!caption.trim()) {
+      setFormError("Please add a caption.");
+      return;
+    }
+
+    if (!location.trim()) {
+      setFormError("Please add a location.");
+      return;
+    }
+
     setFormError("");
+    setSubmitting(true);
+
     try {
-      const signature = await fetch("/api/cloudinary");
-      const signed = await signature.json();
-      if (!signature.ok || !signed.success)
-        throw new Error(signed.message ?? "Could not prepare image upload.");
-      const imgUrls = await Promise.all(
-        files.map(async (file) => {
-          const data = new FormData();
-          data.append("file", file);
-          data.append("api_key", signed.data.apiKey);
-          data.append("timestamp", String(signed.data.timestamp));
-          data.append("folder", signed.data.folder);
-          data.append("type", "upload");
-          data.append("signature", signed.data.signature);
-          const response = await fetch(signed.data.uploadUrl, {
-            method: "POST",
-            body: data,
-          });
-          const payload = await response.json();
-          if (!response.ok || !payload.secure_url)
-            throw new Error(payload.error?.message ?? "Image upload failed.");
-          return payload.secure_url as string;
-        }),
-      );
-      const response = await fetch(`/api/tours/${currentUser._id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imgUrls,
-          caption,
-          location,
-          tags: [],
-          visibility,
-        }),
+      const formData = new FormData();
+
+      formData.append("caption", caption.trim());
+      formData.append("location", location.trim());
+      formData.append("visibility", visibility);
+
+      files.forEach((file) => {
+        formData.append("images", file);
       });
+
+      const response = await fetch("/api/tours", {
+        method: "POST",
+        body: formData,
+      });
+
       const payload = await response.json();
-      if (!response.ok || !payload.success)
-        throw new Error(payload.msg ?? "Could not publish your memory.");
-      setPosts((current) => [
-        asPost(payload.data as ApiTour, true),
-        ...current,
-      ]);
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.msg || "Failed to publish post.");
+      }
+
+      if (payload.data) {
+        setPosts((current) => [asPost(payload.data), ...current]);
+      }
+
       setCaption("");
       setLocation("");
       setFiles([]);
+      setVisibility("public");
       setComposerOpen(false);
     } catch (error) {
       setFormError(
         error instanceof Error
           ? error.message
-          : "Could not publish your memory.",
+          : "Something went wrong while publishing.",
       );
     } finally {
       setSubmitting(false);
     }
   }
-  const visiblePosts = posts.filter((post) =>
-    `${post.author} ${post.place} ${post.caption}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
+
+  const destinations = Array.from(
+    new Set(posts.map((post) => post.place).filter(Boolean)),
+  ).slice(0, 5);
+
   return (
-    <main className={styles.dashboard}>
-      <aside className={styles.sidebar}>
-        <a className={styles.brand} href="/dashboard">
-          Wanderly <span>⌁</span>
-        </a>
-        <nav aria-label="Primary navigation">
-          {navItems.map((item) => (
-            <button
-              className={item === "Home" ? styles.navActive : styles.navItem}
-              key={item}
-            >
-              <Icon name={item} />
-              {item}
-            </button>
-          ))}
-        </nav>
-        <div className={styles.sidebarBottom}>
-          <p>☼</p>
-          <div>
-            <strong>Collect beautiful</strong>
-            <br />
-            memories, one journey at a time.
-          </div>
-        </div>
-        <button className={styles.logout}>↪ Log out</button>
-      </aside>
-      <section className={styles.feed}>
+    <div className={styles.dashboard}>
+      <main className={styles.main}>
+        {/* Topbar */}
         <header className={styles.topbar}>
-          <label className={styles.search}>
-            <Icon name="search" />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search memories, places, people..."
-            />
-          </label>
+          <SearchBar onResults={handleSearchResults} />
+
           <button className={styles.iconButton} aria-label="Notifications">
             <Icon name="bell" />
           </button>
-          <div className={styles.avatar}>JS</div>
+
+          <div className={styles.avatar}>
+            {currentUser?.userName?.slice(0, 2).toUpperCase() ?? "JS"}
+          </div>
         </header>
-        <button
-          className={styles.composer}
-          onClick={() => setComposerOpen(true)}
-        >
-          <div className={styles.avatar}>JS</div>
-          <span>What adventure are you sharing today?</span>
-          <Icon name="photo" />
-        </button>
-        <div className={styles.composerActions}>
-          <span>
-            <Icon name="photo" /> Photo
-          </span>
-          <span>
-            <Icon name="pin" /> Location
-          </span>
-          <span>
-            <Icon name="globe" /> Everyone
-          </span>
-          <button onClick={() => setComposerOpen(true)}>Post</button>
+
+        {/* Create post */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold">Your Feed</h1>
+
+            <p className="mt-1 text-sm text-ink-faint">
+              Discover travel memories and share your own.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setComposerOpen(true);
+              setFormError("");
+            }}
+            className="rounded-lg bg-forest px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+          >
+            + Create post
+          </button>
         </div>
-        <div className={styles.postList}>
-          {isLoading && <p className={styles.empty}>Loading memories…</p>}
-          {loadError && <p className={styles.error}>{loadError}</p>}
-          {!isLoading &&
-            !loadError &&
-            visiblePosts.map((post) => {
-              const isLiked = liked.includes(post.id);
-              return (
-                <article className={styles.post} key={post.id}>
-                  <header className={styles.postHeader}>
-                    <div className={styles.authorAvatar}>
-                      {post.author.slice(0, 1)}
-                    </div>
+
+        {/* Search results / normal feed */}
+        <section className={styles.postList}>
+          {isLoading && (
+            <div className="rounded-xl border border-sand bg-white p-6 text-sm text-ink-faint">
+              Loading your feed...
+            </div>
+          )}
+
+          {!isLoading && loadError && (
+            <div className="rounded-xl border border-red-200 bg-white p-6 text-sm text-clay">
+              {loadError}
+            </div>
+          )}
+
+          {!isLoading && !loadError && hasSearched && (
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold">
+                  {isUserSearch ? "People" : "Places"}
+                </h2>
+
+                <span className="text-xs text-ink-faint">
+                  {searchResults.length} result
+                  {searchResults.length === 1 ? "" : "s"}
+                </span>
+              </div>
+
+              {/* No search results */}
+              {searchResults.length === 0 && (
+                <div className="rounded-xl border border-sand bg-white p-8 text-center">
+                  <p className="text-sm font-medium text-ink">
+                    No results found.
+                  </p>
+
+                  <p className="mt-1 text-xs text-ink-faint">
+                    Try searching for something else.
+                  </p>
+                </div>
+              )}
+
+              {/* User search results */}
+              {isUserSearch &&
+                (searchResults as SearchUser[]).map((user) => (
+                  <article
+                    key={user._id}
+                    className="flex items-center gap-4 rounded-xl border border-sand bg-white p-4"
+                  >
+                    {user.imgUrl ? (
+                      <img
+                        src={user.imgUrl}
+                        alt={user.name}
+                        className="h-12 w-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-sand text-sm font-semibold text-ink">
+                        {user.name?.slice(0, 1).toUpperCase() ?? "U"}
+                      </div>
+                    )}
+
                     <div>
-                      <strong>{post.author}</strong>
-                      <p>
-                        {post.handle} · {post.time} ·{" "}
-                        <span>
-                          <Icon name="pin" /> {post.place}
-                        </span>
+                      <p className="font-semibold text-ink">{user.name}</p>
+
+                      <p className="text-sm text-ink-faint">
+                        @{user.userName}
                       </p>
                     </div>
-                    <button aria-label="More options">•••</button>
-                  </header>
-                  <p className={styles.caption}>{post.caption}</p>
-                  <img
-                    src={post.image}
-                    alt={`Memory from ${post.place}`}
-                    className={styles.postImage}
-                  />
-                  <footer className={styles.postFooter}>
-                    <button
-                      className={isLiked ? styles.liked : ""}
-                      onClick={() =>
-                        setLiked((current) =>
-                          isLiked
-                            ? current.filter((id) => id !== post.id)
-                            : [...current, post.id],
-                        )
-                      }
-                    >
-                      <Icon name="heart" /> {post.likes + (isLiked ? 1 : 0)}
-                    </button>
-                    <button>
-                      <Icon name="comment" /> {post.comments}
-                    </button>
-                    <button>
-                      <Icon name="bookmark" /> Save
-                    </button>
-                    <button className={styles.share}>
-                      <Icon name="share" /> Share
-                    </button>
-                  </footer>
-                </article>
-              );
-            })}
-          {!isLoading && !loadError && visiblePosts.length === 0 && (
-            <p className={styles.empty}>No memories match that search.</p>
+                  </article>
+                ))}
+
+              {/* Location search results */}
+              {!isUserSearch &&
+                (searchResults as SearchTour[]).map((tour) => (
+                  <article key={tour._id} className={styles.post}>
+                    <div className={styles.postHeader}>
+                      <div>
+                        <p className={styles.postAuthor}>Travel memory</p>
+
+                        <p className={styles.postHandle}>
+                          {formatTime(tour.createdAt)}
+                        </p>
+                      </div>
+
+                      <span className={styles.postPlace}>
+                        {tour.location}
+                      </span>
+                    </div>
+
+                    {tour.imgUrls?.[0] && (
+                      <img
+                        src={tour.imgUrls[0]}
+                        alt={tour.location}
+                        className={styles.postImage}
+                      />
+                    )}
+
+                    <p className={styles.postCaption}>{tour.caption}</p>
+
+                    {tour.tags?.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {tour.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full bg-cream px-2.5 py-1 text-xs text-ink-faint"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                ))}
+            </>
           )}
-        </div>
-      </section>
-      <aside className={styles.discover}>
-        <section>
-          <div className={styles.sectionHeading}>
-            <h2>People you may like</h2>
-            <button>See all</button>
-          </div>
-          {people.map((person) => (
-            <div className={styles.person} key={person._id}>
-              <div className={styles.personAvatar}>
-                {person.name.slice(0, 1)}
-              </div>
-              <div>
-                <strong>{person.name}</strong>
-                <p>@{person.userName}</p>
-              </div>
-              <button>Follow</button>
-            </div>
-          ))}
+
+          {/* Normal feed */}
+          {!isLoading && !loadError && !hasSearched && (
+            <>
+              {posts.length === 0 && (
+                <div className="rounded-xl border border-sand bg-white p-8 text-center">
+                  <p className="text-sm font-medium text-ink">
+                    No posts yet.
+                  </p>
+
+                  <p className="mt-1 text-xs text-ink-faint">
+                    Create your first travel memory.
+                  </p>
+                </div>
+              )}
+
+              {posts.map((post) => {
+                const isLiked = liked.includes(post.id);
+
+                return (
+                  <article key={post.id} className={styles.post}>
+                    <div className={styles.postHeader}>
+                      <div>
+                        <p className={styles.postAuthor}>{post.author}</p>
+
+                        <p className={styles.postHandle}>
+                          {post.handle} · {post.time}
+                        </p>
+                      </div>
+
+                      <span className={styles.postPlace}>
+                        {post.place}
+                      </span>
+                    </div>
+
+                    {post.image && (
+                      <img
+                        src={post.image}
+                        alt={post.place}
+                        className={styles.postImage}
+                      />
+                    )}
+
+                    <p className={styles.postCaption}>{post.caption}</p>
+
+                    <div className={styles.postActions}>
+                      <button
+                        type="button"
+                        onClick={() => toggleLike(post.id)}
+                        className={isLiked ? "font-semibold text-clay" : ""}
+                      >
+                        ♥ {post.likes + (isLiked ? 1 : 0)}
+                      </button>
+
+                      <button type="button">
+                        💬 {post.comments}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </>
+          )}
         </section>
-        <section className={styles.trending}>
-          <div className={styles.sectionHeading}>
-            <h2>Trending Destinations</h2>
-            <button>See all</button>
-          </div>
-          {destinations.map(([name, detail, image]) => (
-            <div className={styles.destination} key={name}>
-              <img src={image} alt="" />
-              <div>
-                <strong>{name}</strong>
-                <p>{detail}</p>
+      </main>
+
+      {/* Sidebar */}
+      <aside className={styles.aside}>
+        <section>
+          <h2 className={styles.asideTitle}>People you may know</h2>
+
+          <div className={styles.personList}>
+            {people.map((person) => (
+              <div key={person._id} className={styles.person}>
+                <div className={styles.personAvatar}>
+                  {person.name.slice(0, 1).toUpperCase()}
+                </div>
+
+                <div className="min-w-0">
+                  <p className={styles.personName}>{person.name}</p>
+
+                  <p className={styles.personHandle}>
+                    @{person.userName}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <h2 className={styles.asideTitle}>Popular destinations</h2>
+
+          <div className={styles.destinationList}>
+            {destinations.map((destination) => (
+              <div key={destination} className={styles.destination}>
+                {destination}
+              </div>
+            ))}
+          </div>
         </section>
       </aside>
+
+      {/* Create post modal */}
       {isComposerOpen && (
-        <div
-          className={styles.overlay}
-          role="presentation"
-          onMouseDown={() => setComposerOpen(false)}
-        >
-          <form
-            className={styles.modal}
-            onSubmit={publish}
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <header>
-              <h1>Create a post</h1>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-xl border border-sand bg-white p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Create a post</h2>
+
+                <p className="mt-1 text-xs text-ink-faint">
+                  Share your travel memory.
+                </p>
+              </div>
+
               <button
                 type="button"
                 onClick={() => setComposerOpen(false)}
-                aria-label="Close"
+                className="text-xl text-ink-faint"
               >
-                <Icon name="close" />
+                ×
               </button>
-            </header>
-            <label className={styles.fieldLabel}>
-              Add photos
-              <div className={styles.uploadArea}>
+            </div>
+
+            <form onSubmit={publishPost} className="grid gap-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold">
+                  Caption
+                </label>
+
+                <textarea
+                  value={caption}
+                  onChange={(event) => setCaption(event.target.value)}
+                  rows={4}
+                  placeholder="Tell people about your trip..."
+                  className="w-full resize-none rounded-lg border border-sand bg-white px-3 py-2.5 text-sm outline-none focus:border-forest"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold">
+                  Location
+                </label>
+
+                <input
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
+                  placeholder="e.g. Goa, India"
+                  className="w-full rounded-lg border border-sand bg-white px-3 py-2.5 text-sm outline-none focus:border-forest"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold">
+                  Images
+                </label>
+
                 <input
                   type="file"
                   accept="image/*"
                   multiple
-                  onChange={onFilesSelected}
+                  onChange={handleFiles}
+                  className="w-full text-sm"
                 />
-                <Icon name="upload" />
-                <strong>Upload photos</strong>
-                <span>or drag and drop</span>
               </div>
-            </label>
-            {files.length > 0 && (
-              <div className={styles.fileNames}>
-                {files.map((file) => (
-                  <span key={file.name}>{file.name}</span>
-                ))}
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold">
+                  Visibility
+                </label>
+
+                <select
+                  value={visibility}
+                  onChange={(event) =>
+                    setVisibility(
+                      event.target.value as "public" | "private",
+                    )
+                  }
+                  className="w-full rounded-lg border border-sand bg-white px-3 py-2.5 text-sm outline-none focus:border-forest"
+                >
+                  <option value="public">Public</option>
+                  <option value="private">Private</option>
+                </select>
               </div>
-            )}
-            <label className={styles.fieldLabel}>
-              Caption
-              <textarea
-                required
-                value={caption}
-                onChange={(event) => setCaption(event.target.value)}
-                placeholder="Write about your adventure..."
-              />
-            </label>
-            <label className={styles.fieldLabel}>
-              Location
-              <input
-                required
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-                placeholder="⌖  Add location"
-              />
-            </label>
-            <label className={styles.fieldLabel}>
-              Audience
-              <select
-                value={visibility}
-                onChange={(event) =>
-                  setVisibility(event.target.value as "public" | "private")
-                }
-              >
-                <option value="public">◎ Everyone</option>
-                <option value="private">◉ Only me</option>
-              </select>
-            </label>
-            {formError && <p className={styles.formError}>{formError}</p>}
-            <footer>
-              <button
-                type="button"
-                className={styles.cancel}
-                onClick={() => setComposerOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className={styles.publish}
-                type="submit"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Publishing…" : "↗ Post"}
-              </button>
-            </footer>
-          </form>
+
+              {formError && (
+                <p className="text-xs text-clay">{formError}</p>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setComposerOpen(false)}
+                  className="rounded-lg border border-sand px-4 py-2.5 text-sm font-semibold"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-lg bg-forest px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSubmitting ? "Publishing..." : "Publish"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

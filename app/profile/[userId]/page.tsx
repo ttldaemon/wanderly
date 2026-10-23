@@ -151,7 +151,7 @@ export default function ProfilePage() {
         </button>
 
         <div className="flex justify-center items-center min-h-[80vh]">
-        <section className="rounded-3xl border border-sand bg-white/70 p-6 shadow-sm sm:p-10 min-w-lg">
+        <section className="rounded-3xl border border-sand bg-white/70 p-6 shadow-sm sm:p-10 w-full mx-2">
           <div className="flex flex-col items-center justify-center text-center">
             {profile.imgUrl ? (
               <img
@@ -181,7 +181,8 @@ export default function ProfilePage() {
 
             {isOwner && (
               <div className="mt-7 flex flex-wrap justify-center gap-3">
-                <Button
+                  <Button
+                  className="w-full"
                   variant="outline"
                   icon={<Pencil size={16} />}
                   onClick={() => {
@@ -192,7 +193,8 @@ export default function ProfilePage() {
                   Edit profile
                 </Button>
 
-                <Button
+                  <Button
+                    className="w-full"
                   variant="danger"
                   icon={<Trash2 size={16} />}
                   onClick={handleDelete}

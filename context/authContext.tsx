@@ -68,6 +68,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoadingAuth
   };
 
+  if (isLoadingAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-cream">
+        <div className="flex items-center gap-3">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-sand border-t-forest" />
+          <p className="text-sm text-ink-soft">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 

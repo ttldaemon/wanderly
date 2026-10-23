@@ -275,7 +275,7 @@ export async function PATCH(
 
     const { tourId, ...body } = await req.json();
 
-    console.log(body)
+    // console.log(body)
 
     const updatedTour = await Tour.findByIdAndUpdate(
       tourId,

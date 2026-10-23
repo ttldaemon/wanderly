@@ -39,7 +39,7 @@ export default function HomePage() {
 
       if (res.ok) {
         const data = await res.json();
-        console.log(data);
+        // console.log(data);
         setRecommendedUsers(data.users);
         setInitialTours(data.tours);
       } else {
@@ -68,10 +68,10 @@ export default function HomePage() {
       }
   
       const data = await res.json();
-      console.log(data)
+      // console.log(data)
       setUserTours(data.tours ?? []);
     } catch (error) {
-      console.error("Failed to fetch user tours:", error);
+      // console.error("Failed to fetch user tours:", error);
       setUserTours([]);
     } finally {
       setLoadingUserTours(false)

@@ -17,7 +17,7 @@ export async function GET() {
 
     const userId = new Types.ObjectId(decoded._id); // need to convert it into object Id because in the 22 no line we are using aggregate which is a mongodb operator not mongoose, and it requires objectId not just the string of Id
 
-    console.log(userId);
+    // console.log(userId);
 
     // recommended users
     const users = await User.aggregate([
@@ -88,8 +88,8 @@ export async function GET() {
       },
     ]);
 
-    console.log(users);
-    console.log(tours);
+    // console.log(users);
+    // console.log(tours);
 
     return NextResponse.json(
       {

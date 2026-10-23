@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({success: true, user: resUser, msg: "Login successful"}, { status: 200 })
   } catch (error: unknown) {
-    console.error(error);
+    // console.error(error);
     return NextResponse.json({success: false, msg: "Internal server error"}, { status: 500 })
   }
 }

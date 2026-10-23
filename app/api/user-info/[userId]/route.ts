@@ -51,7 +51,7 @@ export async function PATCH(
       .select("_id name userName imgUrl")
       .lean();
 
-    console.log(updatedUser)
+    // console.log(updatedUser)
 
     if (!updatedUser) {
       throw new Error("User updation failed!!!");
@@ -82,11 +82,11 @@ export async function DELETE(
 
     const { userId } = await params;
 
-    console.log("Requested userId:", userId);
+    // console.log("Requested userId:", userId);
 
     const deletedUser = await User.findByIdAndDelete(userId);
 
-    console.log("Deleted user:", deletedUser);
+    // console.log("Deleted user:", deletedUser);
 
     if (!deletedUser) {
       return NextResponse.json(

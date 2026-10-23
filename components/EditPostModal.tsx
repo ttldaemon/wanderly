@@ -43,7 +43,7 @@ export default function EditPostModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    console.log(tour)
+    // console.log(tour)
 
     setCaption(tour.caption ?? "");
     setLocation(tour.location ?? "");

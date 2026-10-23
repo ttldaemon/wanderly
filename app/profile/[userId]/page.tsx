@@ -62,7 +62,7 @@ export default function ProfilePage() {
     setSaving(true);
     setError("");
 
-    console.log(data)
+    // console.log(data)
     
     try {
       const res = await fetch(`/api/user-info/${userId}`, {

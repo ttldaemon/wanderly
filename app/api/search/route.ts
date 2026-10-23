@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
 
       data = tours
 
-      console.log(data)
+      // console.log(data)
     }
 
     return NextResponse.json(

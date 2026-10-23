@@ -35,7 +35,7 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, isLoadingAuth, router]);
 
-  console.log(isAuthenticated, isLoadingAuth)
+  // console.log(isAuthenticated, isLoadingAuth)
 
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
@@ -75,7 +75,7 @@ export default function LoginPage() {
 
       router.push("/");
     } catch (err) {
-      console.error("Login error:", err);
+      // console.error("Login error:", err);
       setLoading(false);
       setError("An unexpected error occurred. Please try again.");
     }

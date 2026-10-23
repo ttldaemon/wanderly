@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     authData = await verifyToken();
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "User is not logged in"
-    console.log(message)
+    // console.log(message)
   }
 
   const resourceType =

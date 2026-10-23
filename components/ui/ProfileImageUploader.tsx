@@ -101,7 +101,7 @@ export default function ProfileImageUploader({
 
       onChange(result.secure_url);
     } catch (err) {
-      console.error("Profile image upload failed:", err);
+      // console.error("Profile image upload failed:", err);
       setPreviewUrl("");
 
       setError(

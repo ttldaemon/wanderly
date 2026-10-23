@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
            setUser(data.user ?? null);
          }
        } catch (error) {
-         console.error("Authentication failed:", error);
+         // console.error("Authentication failed:", error);
  
          if (!finished) setUser(null);
        } finally {

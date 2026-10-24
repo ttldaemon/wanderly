@@ -10,7 +10,7 @@ export interface IUser {
   createdAt: Date;
   updatedAt: Date;
 }
-
+// userSchema is schema- format in which info is saved
 const userSchema: Schema<IUser> = new Schema(
   {
     name: {
@@ -37,5 +37,5 @@ const userSchema: Schema<IUser> = new Schema(
   },
   { timestamps: true },
 );
-
+// User is model used to query DB, models follow userSchema 
 export const User = mongoose.models.User || mongoose.model("User", userSchema);

@@ -16,17 +16,16 @@ const registerSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-
+    const body = await req.json(); // reads req data and converts it into JS object format
     const parsedBody = registerSchema.safeParse(body);
 
     if (!parsedBody.success) {
       return NextResponse.json(
         {
-          success: false,
+          success: false, 
           msg: parsedBody.error,
-        },
-        { status: 400 },
+        },// payload
+        { status: 400 }, // status code
       );
     }
 
@@ -47,7 +46,6 @@ export async function POST(req: NextRequest) {
     }
 
     const hashedPass = await hash(password, 12);
-
     const user: IUser = await User.create({
       name,
       userName,

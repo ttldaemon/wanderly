@@ -10,7 +10,6 @@ const loginSchema = z.object({
   userName: z.string(),
   password: z.string().min(6, "Password is not valid")
 })
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()

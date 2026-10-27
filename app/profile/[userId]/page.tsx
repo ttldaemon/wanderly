@@ -121,9 +121,12 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-cream text-sm text-ink-soft">
-        Loading profile...
-      </main>
+      <div className="flex min-h-screen items-center justify-center bg-cream">
+        <div className="flex items-center gap-3">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-sand border-t-forest" />
+          <p className="text-sm text-ink-soft">Loading Profile...</p>
+        </div>
+      </div>
     );
   }
 

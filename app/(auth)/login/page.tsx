@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Caveat } from "next/font/google";
-import { User, Lock, Eye, EyeOff, Mountain } from "lucide-react";
+import { CircleUser, Lock, Eye, EyeOff, MountainSnow } from "lucide-react";
 import { TextInput } from "@/components/ui/TextInput";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/context/authContext";
@@ -98,7 +98,7 @@ export default function LoginPage() {
           >
             Wanderly
           </span>
-          <Mountain
+          <MountainSnow
             className="w-8 h-8 sm:w-9 sm:h-9 text-forest"
             strokeWidth={1.75}
           />
@@ -116,7 +116,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="w-full space-y-3">
           {/* Username Field using TextInput */}
           <TextInput
-            icon={<User className="w-5 h-5 text-ink-faint shrink-0" />}
+            icon={<CircleUser className="w-5 h-5 text-ink-faint shrink-0" />}
             type="text"
             name="userName"
             value={form.userName}
